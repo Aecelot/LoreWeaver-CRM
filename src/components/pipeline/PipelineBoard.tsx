@@ -21,13 +21,28 @@ import type { Lead } from '@/types/lead';
 
 interface PipelineBoardProps {
   pipelineType: 'studio' | 'investor';
+  searchTerm?: string;
 }
 
-export const PipelineBoard: React.FC<PipelineBoardProps> = ({ pipelineType }) => {
+export const PipelineBoard: React.FC<PipelineBoardProps> = ({ pipelineType, searchTerm = '' }) => {
   const { leads, loading: leadsLoading } = useLeads({ type: pipelineType });
   const { pipelines, loading: pipelinesLoading, moveLeadToStage } = usePipeline();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [optimisticLeads, setOptimisticLeads] = useState<Lead[] | null>(null);
+
+  // Filter leads based on search term
+  const filteredLeads = useMemo(() => {
+    if (!searchTerm.trim()) return leads;
+    const term = searchTerm.toLowerCase();
+    return leads.filter(
+      (lead) =>
+        lead.name?.toLowerCase().includes(term) ||
+        lead.contact?.name?.toLowerCase().includes(term) ||
+        lead.contact?.email?.toLowerCase().includes(term) ||
+        lead.location?.toLowerCase().includes(term) ||
+        lead.country?.toLowerCase().includes(term)
+    );
+  }, [leads, searchTerm]);
 
   // Get the relevant pipeline
   const pipeline = useMemo(() => {
@@ -42,8 +57,8 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({ pipelineType }) =>
       .sort((a, b) => a.order - b.order);
   }, [pipeline]);
 
-  // Use optimistic leads if available, otherwise use real leads
-  const displayLeads = optimisticLeads ?? leads;
+  // Use optimistic leads if available, otherwise use filtered leads
+  const displayLeads = optimisticLeads ?? filteredLeads;
 
   // Group leads by stage
   const leadsByStage = useMemo(() => {
