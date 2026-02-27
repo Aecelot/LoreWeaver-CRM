@@ -18,7 +18,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Building, DollarSign, Mail, MapPin, Eye, Pencil, Trash2 } from 'lucide-react';
 import { useLeads } from '@/hooks/useLeads';
+import { useTags } from '@/hooks/useTags';
 import { LeadEditDialog } from '@/components/leads/LeadEditDialog';
+import { getTagColorClasses } from '@/types/tag';
 import type { Lead } from '@/types/lead';
 
 interface PipelineCardProps {
@@ -36,6 +38,7 @@ const priorityColors: Record<string, string> = {
 export const PipelineCard: React.FC<PipelineCardProps> = ({ lead, isDragging }) => {
   const navigate = useNavigate();
   const { removeLead } = useLeads();
+  const { tags } = useTags();
   const [showActions, setShowActions] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -167,6 +170,23 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({ lead, isDragging }) 
             {lead.priority !== 'none' && (
               <Badge variant="secondary" className={`text-xs ${priorityColors[lead.priority]}`}>
                 {lead.priority}
+              </Badge>
+            )}
+            {lead.tags?.slice(0, 2).map((tagName) => {
+              const tag = tags.find((t) => t.name === tagName);
+              return (
+                <Badge
+                  key={tagName}
+                  variant="secondary"
+                  className={`text-xs ${getTagColorClasses(tag?.color || 'gray')}`}
+                >
+                  {tagName}
+                </Badge>
+              );
+            })}
+            {lead.tags && lead.tags.length > 2 && (
+              <Badge variant="secondary" className="text-xs">
+                +{lead.tags.length - 2}
               </Badge>
             )}
           </div>

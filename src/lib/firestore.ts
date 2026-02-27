@@ -17,11 +17,13 @@ import { db } from './firebase';
 import type { Lead, LeadFilters } from '../types/lead';
 import type { Note, NoteFormData } from '../types/note';
 import type { Pipeline } from '../types/pipeline';
+import type { Tag } from '../types/tag';
 
 // Collections
 const LEADS_COLLECTION = 'leads';
 const NOTES_COLLECTION = 'notes';
 const PIPELINES_COLLECTION = 'pipelines';
+const TAGS_COLLECTION = 'tags';
 
 // Lead operations
 export const getLeads = (filters?: LeadFilters) => {
@@ -279,4 +281,37 @@ export const initializeDefaultPipelines = async () => {
   
   await batch.commit();
   return [studioRef.id, investorRef.id];
+};
+
+// Tag operations
+export const getTagsRealtime = (callback: (tags: Tag[]) => void) => {
+  const q = query(collection(db, TAGS_COLLECTION), orderBy('name'));
+  return onSnapshot(q, (snapshot) => {
+    const tags = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Tag[];
+    callback(tags);
+  }, (error) => {
+    console.error('Tags fetch error:', error);
+    callback([]);
+  });
+};
+
+export const createTag = async (tagData: Omit<Tag, 'id' | 'createdAt'>): Promise<string> => {
+  const docRef = await addDoc(collection(db, TAGS_COLLECTION), {
+    ...tagData,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+};
+
+export const updateTag = async (id: string, data: Partial<Tag>): Promise<void> => {
+  const docRef = doc(db, TAGS_COLLECTION, id);
+  await updateDoc(docRef, data);
+};
+
+export const deleteTag = async (id: string): Promise<void> => {
+  const docRef = doc(db, TAGS_COLLECTION, id);
+  await deleteDoc(docRef);
 };

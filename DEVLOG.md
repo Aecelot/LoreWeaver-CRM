@@ -261,8 +261,55 @@ initializeDefaultPipelines: vi.fn().mockResolvedValue(['id1', 'id2'])
 - [ ] Set up CI/CD (optional)
 
 ### Future Enhancements
-- [ ] Bulk actions on leads list
-- [ ] Tags filtering and management
-- [ ] Keyboard shortcuts
+- [ ] Activity tracking system
+- [ ] Activity timeline component
+- [ ] Keyboard shortcuts (N=new lead, /=search, Esc=close)
+- [ ] Mobile-responsive pipeline columns
+- [ ] Touch-friendly drag handles
 - [ ] Code splitting for smaller bundle
 - [ ] Virtualization for large lead lists
+
+---
+
+## Phase 9: UX Improvements
+
+**Status**: Complete
+
+### Completed
+- Moved Firebase config to environment variables (.env file)
+- Removed Firebase credentials from git history
+- Added toast notification system using shadcn/ui Sonner
+- Replaced console.error calls with user-facing error toasts
+- Added ErrorBoundary component for graceful error handling
+- Enhanced bulk actions with stage change dropdown
+- Enhanced bulk actions with full priority dropdown
+- Added search/filter bar to pipeline view
+- Added quick action buttons to pipeline cards (view, edit, delete)
+- Created reusable EmptyState component
+- Added onboarding empty state for new users
+- Created Tag type and Firestore schema
+- Built TagManager UI in Settings page
+- Added TagSelector component to lead forms
+- Display tags on pipeline cards
+
+### Key Files
+- `.env` - Firebase credentials (gitignored)
+- `.env.example` - Template for environment variables
+- `src/lib/firebase.ts` - Updated to use environment variables
+- `src/components/ui/sonner.tsx` - Toast component
+- `src/components/common/ErrorBoundary.tsx` - Error boundary
+- `src/components/common/EmptyState.tsx` - Reusable empty state
+- `src/components/dashboard/OnboardingEmptyState.tsx` - New user onboarding
+- `src/types/tag.ts` - Tag type and color definitions
+- `src/hooks/useTags.ts` - Tags management hook
+- `src/components/settings/TagManager.tsx` - Tag CRUD UI
+- `src/components/forms/TagSelector.tsx` - Tag selector for leads
+- `src/components/leads/LeadsBulkActions.tsx` - Enhanced bulk actions
+- `src/components/pipeline/PipelineCard.tsx` - Added quick actions and tags
+- `src/pages/PipelineView.tsx` - Added search functionality
+
+### Technical Notes
+- Tags are stored in Firestore 'tags' collection
+- Lead tags stored as array of tag names (strings)
+- Tags display limited to 2 on pipeline cards with +N indicator
+- Environment variables use VITE_ prefix for client-side access

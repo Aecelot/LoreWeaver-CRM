@@ -1,11 +1,24 @@
 import React from 'react';
 import { useLeads } from '@/hooks/useLeads';
 import { useActivity } from '@/hooks/useActivity';
-import { StatsCards, RecentLeads, ActivityFeed } from '@/components/dashboard';
+import { StatsCards, RecentLeads, ActivityFeed, OnboardingEmptyState } from '@/components/dashboard';
 
 export const Dashboard: React.FC = () => {
   const { leads, loading: leadsLoading } = useLeads();
   const { activities, loading: activitiesLoading } = useActivity(10);
+
+  // Show onboarding empty state for new users with no leads
+  if (!leadsLoading && leads.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Welcome to LoreWeaver CRM</p>
+        </div>
+        <OnboardingEmptyState />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

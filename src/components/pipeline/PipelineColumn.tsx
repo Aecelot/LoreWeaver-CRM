@@ -2,6 +2,7 @@ import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Badge } from '@/components/ui/badge';
+import { Inbox } from 'lucide-react';
 import { PipelineCard } from './PipelineCard';
 import { getStageColorClass, getStageBorderColorClass } from '@/lib/stages';
 import type { Lead } from '@/types/lead';
@@ -62,8 +63,9 @@ export const PipelineColumn: React.FC<PipelineColumnProps> = ({ stage, leads }) 
         </SortableContext>
 
         {leads.length === 0 && (
-          <div className="flex items-center justify-center h-20 text-sm text-muted-foreground border-2 border-dashed rounded-lg">
-            Drop leads here
+          <div className="flex flex-col items-center justify-center h-24 text-sm text-muted-foreground border-2 border-dashed rounded-lg gap-1">
+            <Inbox className="h-5 w-5" />
+            <span>Drop leads here</span>
           </div>
         )}
       </div>

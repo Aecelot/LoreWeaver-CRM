@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useLeads } from '@/hooks/useLeads';
+import { usePipeline } from '@/hooks/usePipeline';
 import { LeadsFilters, LeadsTable, LeadsBulkActions, LeadCreateDialog } from '@/components/leads';
 import type { LeadFilters } from '@/types/lead';
 
@@ -74,6 +75,25 @@ export const Leads: React.FC = () => {
     }
   };
 
+  const { moveLeadToStage } = usePipeline();
+
+  const handleSetStage = async (stageId: string) => {
+    try {
+      await Promise.all(
+        selectedIds.map((id) => moveLeadToStage(id, stageId))
+      );
+      toast.success(`${selectedIds.length} lead(s) moved`);
+      setSelectedIds([]);
+    } catch {
+      toast.error('Failed to move leads');
+    }
+  };
+
+  // Get selected lead objects for bulk actions
+  const selectedLeads = useMemo(() => {
+    return leads.filter((lead) => selectedIds.includes(lead.id));
+  }, [leads, selectedIds]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -98,9 +118,11 @@ export const Leads: React.FC = () => {
 
       <LeadsBulkActions
         selectedCount={selectedIds.length}
+        selectedLeads={selectedLeads}
         onDelete={handleDelete}
         onArchive={handleArchive}
         onSetPriority={handleSetPriority}
+        onSetStage={handleSetStage}
       />
 
       <LeadsTable

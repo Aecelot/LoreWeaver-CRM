@@ -9,11 +9,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useConfig } from '@/contexts/ConfigContext';
+import { TagSelector } from './TagSelector';
 import type { Lead } from '@/types/lead';
 
 interface LeadBasicFieldsProps {
   values: Partial<Lead>;
-  onChange: (field: keyof Lead, value: string) => void;
+  onChange: (field: keyof Lead, value: unknown) => void;
   errors?: Record<string, string>;
 }
 
@@ -145,6 +146,14 @@ export const LeadBasicFields: React.FC<LeadBasicFieldsProps> = ({
             placeholder="Country"
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Tags</Label>
+        <TagSelector
+          selectedTags={values.tags || []}
+          onChange={(tags) => onChange('tags', tags)}
+        />
       </div>
     </div>
   );

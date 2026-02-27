@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { ExportDialog, ImportDialog } from '@/components/settings';
+import { ExportDialog, ImportDialog, TagManager } from '@/components/settings';
 import { initializeDefaultPipelines } from '@/lib/firestore';
 import { Download, Upload, User, Database, GitBranch } from 'lucide-react';
 
@@ -102,6 +102,8 @@ export const Settings: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      <TagManager />
 
       <Card>
         <CardHeader>

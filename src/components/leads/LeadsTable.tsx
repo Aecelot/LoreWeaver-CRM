@@ -10,8 +10,9 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Building, DollarSign, ExternalLink } from 'lucide-react';
+import { Building, DollarSign, ExternalLink, Users } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { EmptyState } from '@/components/common';
 import type { Lead } from '@/types/lead';
 
 interface LeadsTableProps {
@@ -93,11 +94,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
   if (leads.length === 0) {
     return (
-      <div className="border rounded-lg p-8 text-center">
-        <p className="text-muted-foreground">No leads found.</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Try adjusting your filters or add a new lead.
-        </p>
+      <div className="border rounded-lg">
+        <EmptyState
+          icon={Users}
+          title="No leads found"
+          description="Try adjusting your filters or add a new lead to get started."
+        />
       </div>
     );
   }
