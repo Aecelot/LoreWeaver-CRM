@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getPipelinesRealtime, initializeDefaultPipelines, updateLeadStage } from '@/lib/firestore';
+import { getPipelinesRealtime, updateLeadStage } from '@/lib/firestore';
 import type { Pipeline } from '@/types/pipeline';
 
 export const usePipeline = () => {

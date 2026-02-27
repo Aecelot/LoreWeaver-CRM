@@ -10,6 +10,7 @@ import {
 } from '@dnd-kit/core';
 import type { DragStartEvent, DragEndEvent, DragOverEvent } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { toast } from 'sonner';
 import { PipelineColumn } from './PipelineColumn';
 import { PipelineCardOverlay } from './PipelineCard';
 import { getLeadsByStage } from '@/lib/stages';
@@ -151,8 +152,8 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({ pipelineType }) =>
     if (targetStageId && targetStageId !== activeLead.pipeline?.stageId) {
       try {
         await moveLeadToStage(activeLeadId, targetStageId);
-      } catch (error) {
-        console.error('Failed to move lead:', error);
+      } catch {
+        toast.error('Failed to move lead');
         // Rollback on error
         setOptimisticLeads(null);
         return;

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -28,9 +29,10 @@ export const LeadEditDialog: React.FC<LeadEditDialogProps> = ({
     setIsSubmitting(true);
     try {
       await editLead(lead.id, values);
+      toast.success('Lead updated');
       onOpenChange(false);
-    } catch (error) {
-      console.error('Failed to update lead:', error);
+    } catch {
+      toast.error('Failed to update lead');
     } finally {
       setIsSubmitting(false);
     }

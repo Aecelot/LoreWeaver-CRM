@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -28,9 +29,10 @@ export const LeadCreateDialog: React.FC<LeadCreateDialogProps> = ({
     setIsSubmitting(true);
     try {
       await addLead(values as Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>);
+      toast.success('Lead created successfully');
       onOpenChange(false);
-    } catch (error) {
-      console.error('Failed to create lead:', error);
+    } catch {
+      toast.error('Failed to create lead');
     } finally {
       setIsSubmitting(false);
     }

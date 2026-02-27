@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useLeads } from '@/hooks/useLeads';
@@ -42,9 +43,10 @@ export const Leads: React.FC = () => {
 
     try {
       await Promise.all(selectedIds.map((id) => removeLead(id)));
+      toast.success(`${selectedIds.length} lead(s) deleted`);
       setSelectedIds([]);
-    } catch (error) {
-      console.error('Failed to delete leads:', error);
+    } catch {
+      toast.error('Failed to delete leads');
     }
   };
 
@@ -53,9 +55,10 @@ export const Leads: React.FC = () => {
       await Promise.all(
         selectedIds.map((id) => editLead(id, { status: 'archived' }))
       );
+      toast.success(`${selectedIds.length} lead(s) archived`);
       setSelectedIds([]);
-    } catch (error) {
-      console.error('Failed to archive leads:', error);
+    } catch {
+      toast.error('Failed to archive leads');
     }
   };
 
@@ -64,9 +67,10 @@ export const Leads: React.FC = () => {
       await Promise.all(
         selectedIds.map((id) => editLead(id, { priority }))
       );
+      toast.success('Priority updated');
       setSelectedIds([]);
-    } catch (error) {
-      console.error('Failed to update priority:', error);
+    } catch {
+      toast.error('Failed to update priority');
     }
   };
 

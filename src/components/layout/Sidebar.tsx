@@ -1,14 +1,15 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Building, 
-  DollarSign, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  Building,
+  DollarSign,
+  Settings,
   LogOut,
   User
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ export const Sidebar: React.FC = () => {
   const { user, signOut } = useAuth();
 
   const handleSignOut = () => {
-    signOut().catch(console.error);
+    signOut().catch(() => toast.error('Failed to sign out'));
   };
 
   return (

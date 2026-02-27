@@ -5,6 +5,7 @@ import {
   onAuthStateChanged
 } from 'firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
+import { toast } from 'sonner';
 import { auth, googleProvider } from '@/lib/firebase';
 import type { User, AuthContextType } from '@/types/user';
 
@@ -34,7 +35,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           firebaseSignOut(auth);
           setUser(null);
           setLoading(false);
-          alert('Access restricted to @loreweaver.ink email addresses only.');
+          toast.error('Access restricted to @loreweaver.ink email addresses only.');
           return;
         }
         const userData: User = {
@@ -60,7 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
-      console.error('Sign-in error:', error);
+      toast.error('Failed to sign in. Please try again.');
       throw error;
     }
   };
@@ -69,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await firebaseSignOut(auth);
     } catch (error) {
-      console.error('Sign-out error:', error);
+      toast.error('Failed to sign out. Please try again.');
       throw error;
     }
   };

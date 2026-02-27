@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,9 +23,8 @@ export const Login: React.FC = () => {
     try {
       setIsLoading(true);
       await signIn();
-    } catch (error) {
-      console.error('Sign-in failed:', error);
-      // Error handling is done in the auth context
+    } catch {
+      toast.error('Sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

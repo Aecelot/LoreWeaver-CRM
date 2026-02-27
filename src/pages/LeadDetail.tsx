@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeads } from '@/hooks/useLeads';
@@ -42,9 +43,10 @@ export const LeadDetail: React.FC = () => {
     setIsDeleting(true);
     try {
       await removeLead(id);
+      toast.success('Lead deleted');
       navigate('/leads');
-    } catch (error) {
-      console.error('Failed to delete lead:', error);
+    } catch {
+      toast.error('Failed to delete lead');
       setIsDeleting(false);
     }
   };

@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
-import { ProtectedRoute } from '@/components/common/ProtectedRoute';
+import { ProtectedRoute, ErrorBoundary } from '@/components/common';
 import { Layout } from '@/components/layout/Layout';
 import { Dashboard, Leads, LeadDetail, Login, PipelineView, Settings } from '@/pages';
+import { Toaster } from '@/components/ui/sonner';
 import './index.css';
 
 function App() {
@@ -11,7 +12,8 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <ConfigProvider>
-          <Routes>
+          <ErrorBoundary>
+            <Routes>
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
 
@@ -32,7 +34,9 @@ function App() {
 
             {/* Catch-all redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </ErrorBoundary>
+          <Toaster richColors position="top-right" />
         </ConfigProvider>
       </AuthProvider>
     </BrowserRouter>

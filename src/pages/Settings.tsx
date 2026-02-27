@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,9 +19,9 @@ export const Settings: React.FC = () => {
     try {
       await initializeDefaultPipelines();
       setPipelinesInitialized(true);
+      toast.success('Pipelines initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize pipelines:', error);
-      alert('Failed to initialize pipelines. They may already exist.');
+      toast.error('Failed to initialize pipelines. They may already exist.');
     } finally {
       setInitializingPipelines(false);
     }
