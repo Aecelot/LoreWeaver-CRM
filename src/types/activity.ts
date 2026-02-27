@@ -1,27 +1,47 @@
-import type { Lead } from './lead';
+import type { Timestamp } from 'firebase/firestore';
 
 export type ActivityType =
-  | 'LEAD_CREATED'
-  | 'LEAD_UPDATED'
-  | 'LEAD_STAGE_CHANGED'
-  | 'NOTE_ADDED';
+  | 'lead_created'
+  | 'lead_updated'
+  | 'lead_deleted'
+  | 'stage_changed'
+  | 'note_added'
+  | 'note_updated'
+  | 'note_deleted';
+
+export interface ActivityChange {
+  field: string;
+  from: unknown;
+  to: unknown;
+}
 
 export interface Activity {
   id: string;
-  type: ActivityType;
   leadId: string;
-  lead?: Lead;
-  userId?: string;
-  timestamp: Date;
-  data?: {
-    previousStage?: string;
-    newStage?: string;
-    noteId?: string;
-    [key: string]: any;
-  };
+  type: ActivityType;
+  description: string;
+  changes?: ActivityChange[];
+  userId: string;
+  userEmail: string;
+  createdAt: Timestamp;
 }
 
-// Helper to create activity ID
-export const createActivityId = (type: ActivityType, leadId: string, timestamp: Date): string => {
-  return `${type}.${leadId}.${timestamp.getTime()}`;
+export interface ActivityFormData {
+  leadId: string;
+  type: ActivityType;
+  description: string;
+  changes?: ActivityChange[];
+  userId: string;
+  userEmail: string;
+}
+
+// Human-readable labels for activity types
+export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
+  lead_created: 'Created lead',
+  lead_updated: 'Updated lead',
+  lead_deleted: 'Deleted lead',
+  stage_changed: 'Changed stage',
+  note_added: 'Added note',
+  note_updated: 'Updated note',
+  note_deleted: 'Deleted note',
 };

@@ -5,6 +5,7 @@ import {
   closestCorners,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -16,6 +17,7 @@ import { PipelineCardOverlay } from './PipelineCard';
 import { getLeadsByStage } from '@/lib/stages';
 import { useLeads } from '@/hooks/useLeads';
 import { usePipeline } from '@/hooks/usePipeline';
+import { useActivityLogger } from '@/hooks/useActivities';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Lead } from '@/types/lead';
 
@@ -27,6 +29,7 @@ interface PipelineBoardProps {
 export const PipelineBoard: React.FC<PipelineBoardProps> = ({ pipelineType, searchTerm = '' }) => {
   const { leads, loading: leadsLoading } = useLeads({ type: pipelineType });
   const { pipelines, loading: pipelinesLoading, moveLeadToStage } = usePipeline();
+  const { logStageChanged } = useActivityLogger();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [optimisticLeads, setOptimisticLeads] = useState<Lead[] | null>(null);
 
@@ -76,6 +79,12 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({ pipelineType, sear
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // Long press to start drag on mobile
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -166,7 +175,15 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({ pipelineType, sear
     // If target stage is different, persist the change
     if (targetStageId && targetStageId !== activeLead.pipeline?.stageId) {
       try {
+        const fromStage = stages.find((s) => s.id === activeLead.pipeline?.stageId);
+        const toStage = stages.find((s) => s.id === targetStageId);
         await moveLeadToStage(activeLeadId, targetStageId);
+        await logStageChanged(
+          activeLeadId,
+          activeLead.name,
+          fromStage?.name || 'Unknown',
+          toStage?.name || 'Unknown'
+        );
       } catch {
         toast.error('Failed to move lead');
         // Rollback on error
@@ -187,11 +204,11 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({ pipelineType, sear
   // Loading state
   if (leadsLoading || pipelinesLoading) {
     return (
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto pb-4">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="min-w-[280px]">
+          <div key={i} className="w-full md:min-w-[280px] md:w-auto">
             <Skeleton className="h-12 w-full rounded-t-lg" />
-            <Skeleton className="h-[400px] w-full rounded-b-lg mt-1" />
+            <Skeleton className="h-[200px] md:h-[400px] w-full rounded-b-lg mt-1" />
           </div>
         ))}
       </div>
@@ -216,7 +233,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({ pipelineType, sear
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto pb-4">
         {stages.map((stage) => (
           <PipelineColumn
             key={stage.id}

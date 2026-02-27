@@ -13,6 +13,7 @@ import {
   LeadEditDialog,
 } from '@/components/leads';
 import { NotesList } from '@/components/notes';
+import { ActivityTimeline } from '@/components/activities';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,8 +102,9 @@ export const LeadDetail: React.FC = () => {
           {lead.type === 'investor' && <LeadInvestorInfo lead={lead} />}
         </div>
         <div className="space-y-6">
-          <NotesList leadId={lead.id} />
+          <NotesList leadId={lead.id} leadName={lead.name} />
           <LeadTags lead={lead} />
+          <ActivityTimeline leadId={lead.id} />
         </div>
       </div>
 

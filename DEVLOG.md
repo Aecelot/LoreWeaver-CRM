@@ -249,25 +249,26 @@ initializeDefaultPipelines: vi.fn().mockResolvedValue(['id1', 'id2'])
 
 ## Remaining Work
 
-### Phase 9: Integration Testing
+### Integration Testing
 - [ ] Set up Firebase emulator for tests
 - [ ] Write integration tests for full workflows
 - [ ] Generate coverage report
 
-### Phase 10: Firebase Deployment
-- [ ] Configure production Firebase credentials
-- [ ] Create Firestore security rules
-- [ ] Deploy to Firebase Hosting
-- [ ] Set up CI/CD (optional)
-
 ### Future Enhancements
-- [ ] Activity tracking system
-- [ ] Activity timeline component
-- [ ] Keyboard shortcuts (N=new lead, /=search, Esc=close)
-- [ ] Mobile-responsive pipeline columns
-- [ ] Touch-friendly drag handles
-- [ ] Code splitting for smaller bundle
-- [ ] Virtualization for large lead lists
+- [x] Activity tracking system
+- [x] Activity timeline component
+- [x] Keyboard shortcuts (N=new lead, /=search, Esc=close)
+- [x] Mobile-responsive pipeline columns
+- [x] Touch-friendly drag handles
+- [x] Code splitting for smaller bundle
+- [x] Virtualization for large lead lists
+- [x] Firestore security rules
+- [x] Firebase deployment configuration
+- [x] Lead duplicate detection
+- [x] Improved bulk import validation
+- [x] Dashboard charts (type, priority, stage distribution)
+- [ ] Set up CI/CD (optional)
+- [ ] E2E tests with Playwright
 
 ---
 
@@ -313,3 +314,55 @@ initializeDefaultPipelines: vi.fn().mockResolvedValue(['id1', 'id2'])
 - Lead tags stored as array of tag names (strings)
 - Tags display limited to 2 on pipeline cards with +N indicator
 - Environment variables use VITE_ prefix for client-side access
+
+---
+
+## Phase 10: Performance & Production Ready
+
+**Status**: Complete
+
+### Completed
+- **Activity Tracking System**: Created Activity type, Firestore operations, and useActivityLogger hook
+- **Activity Timeline**: Built ActivityTimeline component for lead detail page with icons and formatting
+- **Keyboard Shortcuts**: Added N (new lead), / (search focus), Escape (close/clear) via useKeyboardShortcuts hook
+- **Mobile Responsive Pipeline**: Pipeline columns stack vertically on mobile, horizontal scroll on desktop
+- **Touch-Friendly Drag**: Added TouchSensor to @dnd-kit and GripVertical drag handles for mobile
+- **Code Splitting**: Implemented React.lazy() for page components, reduced main bundle from ~1.37MB to ~294KB
+- **Vendor Chunking**: Split vendor libraries (react, firebase, radix-ui, dnd-kit, xlsx, recharts)
+- **List Virtualization**: Added @tanstack/react-virtual to LeadsTable for large dataset performance
+- **Firestore Security Rules**: Created firestore.rules with user-based access control
+- **Firebase Deployment Config**: Added firebase.json, .firebaserc, and deployment npm scripts
+- **Duplicate Detection**: Created duplicate detection utility checking email, website domain, and name similarity
+- **Import Validation**: Enhanced bulk import with validation issues, duplicate detection, and skip duplicates option
+- **Dashboard Charts**: Added LeadsByTypeChart, LeadsByPriorityChart, LeadsByStageChart using recharts
+
+### Key Files
+- `src/types/activity.ts` - Activity type definitions
+- `src/hooks/useActivities.ts` - Activity logging hook
+- `src/components/activities/ActivityTimeline.tsx` - Activity timeline component
+- `src/hooks/useKeyboardShortcuts.ts` - Global keyboard shortcut handler
+- `src/lib/duplicateDetection.ts` - Duplicate detection utility
+- `src/hooks/useDuplicateDetection.ts` - Duplicate detection hook
+- `src/components/dashboard/LeadsByTypeChart.tsx` - Pie chart for lead types
+- `src/components/dashboard/LeadsByPriorityChart.tsx` - Pie chart for priorities
+- `src/components/dashboard/LeadsByStageChart.tsx` - Bar chart for pipeline stages
+- `firestore.rules` - Firestore security rules
+- `firebase.json` - Firebase hosting configuration
+- `vite.config.ts` - Added manual chunks for vendor splitting
+
+### Build Statistics
+- Main bundle: 298 kB (gzip: 91 kB)
+- vendor-react: 47 kB
+- vendor-firebase: 337 kB
+- vendor-ui: 113 kB
+- vendor-dnd: 49 kB
+- vendor-xlsx: 424 kB
+- vendor-charts: 361 kB
+- Build time: ~14 seconds
+
+### Technical Notes
+- Virtualization threshold set to 50 rows (below uses standard rendering)
+- Keyboard shortcuts disabled in input fields except Escape
+- Duplicate detection uses Levenshtein distance for name similarity (0.7 threshold)
+- Security rules enforce user-based access via createdBy/userId fields
+- Charts use recharts library with custom tooltip styling

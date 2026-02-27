@@ -50,9 +50,10 @@ export const useLeads = (filters?: LeadFilters) => {
     };
   }, [stableFilters]);
 
-  const addLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
     try {
-      await createLead(leadData);
+      const id = await createLead(leadData);
+      return id;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create lead');
       throw err;

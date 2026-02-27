@@ -1,0 +1,84 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper function to check if the user created the document
+    function isCreator() {
+      return isAuthenticated() && resource.data.createdBy == request.auth.uid;
+    }
+
+    // Leads collection
+    match /leads/{leadId} {
+      // Only authenticated users can read leads they created
+      allow read: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+
+      // Only authenticated users can create leads, and createdBy must be their uid
+      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
+
+      // Only the creator can update or delete
+      allow update, delete: if isCreator();
+    }
+
+    // Notes collection
+    match /notes/{noteId} {
+      // Allow read if authenticated and user created the note
+      allow read: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+
+      // Allow create if authenticated and createdBy matches auth uid
+      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
+
+      // Allow update/delete if user created the note
+      allow update, delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+    }
+
+    // Activities collection
+    match /activities/{activityId} {
+      // Allow read if authenticated and user created the activity
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+
+      // Allow create if authenticated and userId matches auth uid
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+
+      // Activities are immutable - no updates or deletes from client
+      // (deletion happens via cloud function or admin when lead is deleted)
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Pipelines collection (shared configuration)
+    match /pipelines/{pipelineId} {
+      // All authenticated users can read pipelines
+      allow read: if isAuthenticated();
+
+      // Any authenticated user can create pipelines (for initialization)
+      allow create: if isAuthenticated();
+
+      // Updates allowed for authenticated users (shared config)
+      allow update: if isAuthenticated();
+
+      // Deletion restricted (could add admin check later)
+      allow delete: if isAuthenticated();
+    }
+
+    // Tags collection (shared configuration)
+    match /tags/{tagId} {
+      // All authenticated users can read tags
+      allow read: if isAuthenticated();
+
+      // Any authenticated user can create tags
+      allow create: if isAuthenticated();
+
+      // Any authenticated user can update/delete tags
+      allow update, delete: if isAuthenticated();
+    }
+  }
+}

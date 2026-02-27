@@ -9,7 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import { LeadForm } from '@/components/forms';
 import { useLeads } from '@/hooks/useLeads';
+import { useActivityLogger } from '@/hooks/useActivities';
 import type { Lead } from '@/types/lead';
+import type { ActivityChange } from '@/types/activity';
 
 interface LeadEditDialogProps {
   open: boolean;
@@ -17,18 +19,54 @@ interface LeadEditDialogProps {
   lead: Lead;
 }
 
+// Helper to detect changes between old and new values
+const detectChanges = (oldLead: Lead, newValues: Partial<Lead>): ActivityChange[] => {
+  const changes: ActivityChange[] = [];
+  const fieldsToTrack = ['name', 'type', 'status', 'priority', 'website', 'location', 'country'] as const;
+
+  for (const field of fieldsToTrack) {
+    if (newValues[field] !== undefined && newValues[field] !== oldLead[field]) {
+      changes.push({ field, from: oldLead[field], to: newValues[field] });
+    }
+  }
+
+  // Track contact changes
+  if (newValues.contact) {
+    if (newValues.contact.name !== oldLead.contact?.name) {
+      changes.push({ field: 'contact.name', from: oldLead.contact?.name, to: newValues.contact.name });
+    }
+    if (newValues.contact.email !== oldLead.contact?.email) {
+      changes.push({ field: 'contact.email', from: oldLead.contact?.email, to: newValues.contact.email });
+    }
+  }
+
+  // Track tag changes
+  const oldTags = oldLead.tags?.join(', ') || '';
+  const newTags = newValues.tags?.join(', ') || '';
+  if (newTags !== oldTags) {
+    changes.push({ field: 'tags', from: oldTags, to: newTags });
+  }
+
+  return changes;
+};
+
 export const LeadEditDialog: React.FC<LeadEditDialogProps> = ({
   open,
   onOpenChange,
   lead,
 }) => {
   const { editLead } = useLeads();
+  const { logLeadUpdated } = useActivityLogger();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (values: Partial<Lead>) => {
     setIsSubmitting(true);
     try {
+      const changes = detectChanges(lead, values);
       await editLead(lead.id, values);
+      if (changes.length > 0) {
+        await logLeadUpdated(lead.id, lead.name, changes);
+      }
       toast.success('Lead updated');
       onOpenChange(false);
     } catch {

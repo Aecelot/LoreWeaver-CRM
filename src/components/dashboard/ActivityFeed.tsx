@@ -3,27 +3,42 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle, Edit, ArrowRight, MessageSquare, Activity } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import type { Activity as ActivityType } from '@/types/activity';
-import { getActivityDescription } from '@/hooks/useActivity';
+import type { ActivityType } from '@/types/activity';
+
+// DerivedActivity type used by useActivity hook for dashboard
+interface DerivedActivity {
+  id: string;
+  leadId: string;
+  type: ActivityType;
+  description: string;
+  createdAt: Date;
+  leadName?: string;
+}
 
 interface ActivityFeedProps {
-  activities: ActivityType[];
+  activities: DerivedActivity[];
   loading?: boolean;
   limit?: number;
 }
 
-const activityIcons: Record<ActivityType['type'], React.ElementType> = {
-  LEAD_CREATED: PlusCircle,
-  LEAD_UPDATED: Edit,
-  LEAD_STAGE_CHANGED: ArrowRight,
-  NOTE_ADDED: MessageSquare,
+const activityIcons: Record<ActivityType, React.ElementType> = {
+  lead_created: PlusCircle,
+  lead_updated: Edit,
+  lead_deleted: Activity,
+  stage_changed: ArrowRight,
+  note_added: MessageSquare,
+  note_updated: MessageSquare,
+  note_deleted: MessageSquare,
 };
 
-const activityColors: Record<ActivityType['type'], string> = {
-  LEAD_CREATED: 'text-green-500',
-  LEAD_UPDATED: 'text-blue-500',
-  LEAD_STAGE_CHANGED: 'text-purple-500',
-  NOTE_ADDED: 'text-yellow-500',
+const activityColors: Record<ActivityType, string> = {
+  lead_created: 'text-green-500',
+  lead_updated: 'text-blue-500',
+  lead_deleted: 'text-red-500',
+  stage_changed: 'text-purple-500',
+  note_added: 'text-yellow-500',
+  note_updated: 'text-orange-500',
+  note_deleted: 'text-gray-500',
 };
 
 export const ActivityFeed: React.FC<ActivityFeedProps> = ({
@@ -85,8 +100,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
           {displayActivities.map((activity) => {
             const Icon = activityIcons[activity.type] || Activity;
             const colorClass = activityColors[activity.type] || 'text-gray-500';
-            const description = getActivityDescription(activity);
-            const timeAgo = formatDistanceToNow(activity.timestamp, { addSuffix: true });
+            const timeAgo = formatDistanceToNow(activity.createdAt, { addSuffix: true });
 
             return (
               <div key={activity.id} className="flex items-start gap-4">
@@ -99,10 +113,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                       to={`/leads/${activity.leadId}`}
                       className="text-sm hover:underline"
                     >
-                      {description}
+                      {activity.description}
                     </Link>
                   ) : (
-                    <p className="text-sm">{description}</p>
+                    <p className="text-sm">{activity.description}</p>
                   )}
                   <p className="text-xs text-muted-foreground">{timeAgo}</p>
                 </div>

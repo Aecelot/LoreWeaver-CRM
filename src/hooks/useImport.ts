@@ -1,15 +1,23 @@
 import { useState, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 import { createLead } from '@/lib/firestore';
+import { findDuplicates, type DuplicateMatch } from '@/lib/duplicateDetection';
 import type { Lead } from '@/types/lead';
 
 interface ImportResult {
   success: number;
   failed: number;
+  skippedDuplicates: number;
   errors: string[];
 }
 
-interface ParsedLead {
+export interface ValidationIssue {
+  type: 'error' | 'warning';
+  field: string;
+  message: string;
+}
+
+export interface ParsedLead {
   name: string;
   type: 'studio' | 'investor';
   status: string;
@@ -26,6 +34,44 @@ interface ParsedLead {
   location: string;
   notes: string;
   tags: string[];
+  // Validation metadata
+  validationIssues?: ValidationIssue[];
+  duplicateOf?: DuplicateMatch;
+}
+
+// Email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Validate a single lead and return issues
+function validateLead(lead: ParsedLead): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  // Required fields
+  if (!lead.name?.trim()) {
+    issues.push({ type: 'error', field: 'name', message: 'Name is required' });
+  }
+
+  if (!lead.contact.email?.trim()) {
+    issues.push({ type: 'error', field: 'email', message: 'Email is required' });
+  } else if (!EMAIL_REGEX.test(lead.contact.email.trim())) {
+    issues.push({ type: 'error', field: 'email', message: 'Invalid email format' });
+  }
+
+  // Warnings for recommended fields
+  if (!lead.contact.name?.trim()) {
+    issues.push({ type: 'warning', field: 'contactName', message: 'Contact name is recommended' });
+  }
+
+  // URL validation for website
+  if (lead.website?.trim()) {
+    try {
+      new URL(lead.website.startsWith('http') ? lead.website : `https://${lead.website}`);
+    } catch {
+      issues.push({ type: 'warning', field: 'website', message: 'Invalid website URL' });
+    }
+  }
+
+  return issues;
 }
 
 export const useImport = () => {
@@ -78,14 +124,27 @@ export const useImport = () => {
     });
   }, []);
 
-  const loadPreview = useCallback(async (file: File) => {
+  const loadPreview = useCallback(async (file: File, currentLeads: Lead[] = []) => {
     setError(null);
     setPreview([]);
 
     try {
       const leads = await parseFile(file);
-      setPreview(leads);
-      return leads;
+
+      // Validate and check for duplicates
+      const validatedLeads = leads.map((lead) => {
+        const issues = validateLead(lead);
+        const duplicates = findDuplicates(lead as Partial<Lead>, currentLeads);
+
+        return {
+          ...lead,
+          validationIssues: issues,
+          duplicateOf: duplicates[0] || undefined,
+        };
+      });
+
+      setPreview(validatedLeads);
+      return validatedLeads;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to parse file';
       setError(errorMessage);
@@ -97,20 +156,38 @@ export const useImport = () => {
     leads: ParsedLead[],
     userId: string,
     defaultPipelineId: string,
-    defaultStageId: string
+    defaultStageId: string,
+    options: { skipDuplicates?: boolean } = {}
   ): Promise<ImportResult> => {
+    const { skipDuplicates = true } = options;
+
     setIsImporting(true);
     setError(null);
 
     const result: ImportResult = {
       success: 0,
       failed: 0,
+      skippedDuplicates: 0,
       errors: [],
     };
 
     for (const lead of leads) {
       try {
-        // Validate required fields
+        // Check for duplicates
+        if (skipDuplicates && lead.duplicateOf) {
+          result.skippedDuplicates++;
+          continue;
+        }
+
+        // Check for validation errors
+        const errors = lead.validationIssues?.filter(i => i.type === 'error') || [];
+        if (errors.length > 0) {
+          result.failed++;
+          result.errors.push(`"${lead.name || 'Unknown'}": ${errors.map(e => e.message).join(', ')}`);
+          continue;
+        }
+
+        // Validate required fields (fallback if not pre-validated)
         if (!lead.name) {
           result.failed++;
           result.errors.push(`Row skipped: Missing name`);

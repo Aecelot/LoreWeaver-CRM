@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Table,
   TableBody,
@@ -14,6 +15,9 @@ import { Building, DollarSign, ExternalLink, Users } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { EmptyState } from '@/components/common';
 import type { Lead } from '@/types/lead';
+
+const ROW_HEIGHT = 65; // Estimated height of each table row in pixels
+const VIRTUALIZATION_THRESHOLD = 50; // Only virtualize when more than this many rows
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -58,6 +62,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onSelectionChange,
   loading,
 }) => {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const shouldVirtualize = leads.length > VIRTUALIZATION_THRESHOLD;
+
+  const virtualizer = useVirtualizer({
+    count: leads.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 5, // Render 5 extra items above/below viewport
+  });
+
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       onSelectionChange(leads.map((lead) => lead.id));
@@ -124,8 +138,116 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     );
   }
 
+  // Helper to render a table row
+  const renderRow = (lead: Lead, isSelected: boolean) => {
+    const createdAt = lead.createdAt instanceof Date
+      ? lead.createdAt
+      : lead.createdAt?.toDate?.() ?? new Date();
+    const timeAgo = formatDistanceToNow(createdAt, { addSuffix: true });
+
+    return (
+      <>
+        <TableCell>
+          <Checkbox
+            checked={isSelected}
+            onChange={(e) => handleSelectOne(lead.id, e.target.checked)}
+          />
+        </TableCell>
+        <TableCell>
+          <Link
+            to={`/leads/${lead.id}`}
+            className="flex items-center gap-2 font-medium hover:underline"
+          >
+            {lead.type === 'studio' ? (
+              <Building className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            )}
+            {lead.name}
+          </Link>
+          {lead.website && (
+            <a
+              href={lead.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {new URL(lead.website).hostname}
+            </a>
+          )}
+        </TableCell>
+        <TableCell>
+          <Badge variant="secondary" className={typeColors[lead.type]}>
+            {lead.type}
+          </Badge>
+        </TableCell>
+        <TableCell>
+          <div>
+            <p className="font-medium">{lead.contact.name}</p>
+            <p className="text-xs text-muted-foreground">{lead.contact.role}</p>
+          </div>
+        </TableCell>
+        <TableCell>
+          <Badge variant="secondary" className={priorityColors[lead.priority]}>
+            {lead.priority}
+          </Badge>
+        </TableCell>
+        <TableCell>
+          <span className="capitalize">{lead.status}</span>
+        </TableCell>
+        <TableCell>
+          <span className="text-muted-foreground">{timeAgo}</span>
+        </TableCell>
+      </>
+    );
+  };
+
+  // Non-virtualized table (for small lists)
+  if (!shouldVirtualize) {
+    return (
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) (el as HTMLInputElement).indeterminate = someSelected;
+                  }}
+                  onChange={handleSelectAll}
+                />
+              </TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Contact</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Added</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {leads.map((lead) => {
+              const isSelected = selectedIds.includes(lead.id);
+              return (
+                <TableRow key={lead.id} data-state={isSelected ? 'selected' : undefined}>
+                  {renderRow(lead, isSelected)}
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  }
+
+  // Virtualized table (for large lists)
+  const virtualItems = virtualizer.getVirtualItems();
+
   return (
     <div className="border rounded-lg">
+      {/* Sticky header */}
       <Table>
         <TableHeader>
           <TableRow>
@@ -147,91 +269,47 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             <TableHead>Added</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {leads.map((lead) => {
-            const createdAt = lead.createdAt instanceof Date
-              ? lead.createdAt
-              : lead.createdAt?.toDate?.() ?? new Date();
-            const timeAgo = formatDistanceToNow(createdAt, { addSuffix: true });
-            const isSelected = selectedIds.includes(lead.id);
-
-            return (
-              <TableRow key={lead.id} data-state={isSelected ? 'selected' : undefined}>
-                <TableCell>
-                  <Checkbox
-                    checked={isSelected}
-                    onChange={(e) => handleSelectOne(lead.id, e.target.checked)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Link
-                    to={`/leads/${lead.id}`}
-                    className="flex items-center gap-2 font-medium hover:underline"
-                  >
-                    {lead.type === 'studio' ? (
-                      <Building className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    {lead.name}
-                  </Link>
-                  {lead.website && (
-                    <a
-                      href={lead.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      {new URL(lead.website).hostname}
-                    </a>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className={typeColors[lead.type]}>
-                    {lead.type}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {(() => {
-                    const icp = getICP(lead.tags);
-                    const fitScore = lead.studio?.fitScore;
-                    return (
-                      <div className="flex items-center gap-2">
-                        {fitScore !== undefined && (
-                          <span className={`font-bold ${fitScore >= 85 ? 'text-green-600' : fitScore >= 70 ? 'text-yellow-600' : 'text-gray-500'}`}>
-                            {fitScore}
-                          </span>
-                        )}
-                        <Badge variant="secondary" className={icpColors[icp.type]}>
-                          {icp.label}
-                        </Badge>
-                      </div>
-                    );
-                  })()}
-                </TableCell>
-                <TableCell>
-                  <div>
-                    <p className="font-medium">{lead.contact.name}</p>
-                    <p className="text-xs text-muted-foreground">{lead.contact.role}</p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className={priorityColors[lead.priority]}>
-                    {lead.priority}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <span className="capitalize">{lead.status}</span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-muted-foreground">{timeAgo}</span>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
       </Table>
+      {/* Virtualized scroll container */}
+      <div
+        ref={parentRef}
+        className="max-h-[600px] overflow-auto"
+      >
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          <Table>
+            <TableBody>
+              {virtualItems.map((virtualRow) => {
+                const lead = leads[virtualRow.index];
+                const isSelected = selectedIds.includes(lead.id);
+
+                return (
+                  <TableRow
+                    key={lead.id}
+                    data-state={isSelected ? 'selected' : undefined}
+                    data-index={virtualRow.index}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    {renderRow(lead, isSelected)}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 };

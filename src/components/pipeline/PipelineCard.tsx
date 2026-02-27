@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Building, DollarSign, Mail, MapPin, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Building, DollarSign, Mail, MapPin, Eye, Pencil, Trash2, GripVertical } from 'lucide-react';
 import { useLeads } from '@/hooks/useLeads';
 import { useTags } from '@/hooks/useTags';
 import { LeadEditDialog } from '@/components/leads/LeadEditDialog';
@@ -151,6 +151,10 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({ lead, isDragging }) 
 
         <CardContent className="p-3">
           <div className="flex items-start gap-2">
+            {/* Mobile drag handle - visible on touch devices */}
+            <div className="flex md:hidden h-8 w-6 shrink-0 items-center justify-center text-muted-foreground touch-none">
+              <GripVertical className="h-5 w-5" />
+            </div>
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
               {lead.type === 'studio' ? (
                 <Building className="h-4 w-4 text-primary" />

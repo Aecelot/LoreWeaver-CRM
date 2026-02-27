@@ -1,7 +1,15 @@
 import React from 'react';
 import { useLeads } from '@/hooks/useLeads';
 import { useActivity } from '@/hooks/useActivity';
-import { StatsCards, RecentLeads, ActivityFeed, OnboardingEmptyState } from '@/components/dashboard';
+import {
+  StatsCards,
+  RecentLeads,
+  ActivityFeed,
+  OnboardingEmptyState,
+  LeadsByStageChart,
+  LeadsByTypeChart,
+  LeadsByPriorityChart,
+} from '@/components/dashboard';
 
 export const Dashboard: React.FC = () => {
   const { leads, loading: leadsLoading } = useLeads();
@@ -28,6 +36,13 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <StatsCards leads={leads} loading={leadsLoading} />
+
+      {/* Charts Row */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <LeadsByTypeChart leads={leads} loading={leadsLoading} />
+        <LeadsByPriorityChart leads={leads} loading={leadsLoading} />
+        <LeadsByStageChart leads={leads} pipelineType="studio" loading={leadsLoading} />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <RecentLeads leads={leads} loading={leadsLoading} limit={5} />

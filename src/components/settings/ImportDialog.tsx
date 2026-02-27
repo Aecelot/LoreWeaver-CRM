@@ -7,10 +7,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useImport } from '@/hooks/useImport';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePipeline } from '@/hooks/usePipeline';
-import { Upload, FileSpreadsheet, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { useLeads } from '@/hooks/useLeads';
+import { Upload, FileSpreadsheet, CheckCircle, XCircle, AlertCircle, AlertTriangle, Copy } from 'lucide-react';
 
 interface ImportDialogProps {
   open: boolean;
@@ -20,9 +24,11 @@ interface ImportDialogProps {
 export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onOpenChange }) => {
   const { user } = useAuth();
   const { pipelines } = usePipeline();
+  const { leads } = useLeads();
   const { loadPreview, importLeads, clearPreview, preview, isImporting, error } = useImport();
   const [file, setFile] = useState<File | null>(null);
-  const [importResult, setImportResult] = useState<{ success: number; failed: number; errors: string[] } | null>(null);
+  const [importResult, setImportResult] = useState<{ success: number; failed: number; skippedDuplicates: number; errors: string[] } | null>(null);
+  const [skipDuplicates, setSkipDuplicates] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +39,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onOpenChange }
     setImportResult(null);
 
     try {
-      await loadPreview(selectedFile);
+      await loadPreview(selectedFile, leads);
     } catch {
       // Error is handled in useImport
     }
@@ -47,7 +53,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onOpenChange }
     const defaultStageId = defaultPipeline?.stages[0]?.id || 'new-lead';
     const defaultPipelineId = defaultPipeline?.id || 'default';
 
-    const result = await importLeads(preview, user.uid, defaultPipelineId, defaultStageId);
+    const result = await importLeads(preview, user.uid, defaultPipelineId, defaultStageId, { skipDuplicates });
     setImportResult(result);
 
     if (result.success > 0) {
@@ -69,8 +75,17 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onOpenChange }
     onOpenChange(false);
   };
 
-  const validLeads = preview.filter((l) => l.name && l.contact.email);
-  const invalidLeads = preview.filter((l) => !l.name || !l.contact.email);
+  // Count leads by status
+  const validLeads = preview.filter((l) => {
+    const hasErrors = l.validationIssues?.some(i => i.type === 'error');
+    return !hasErrors && (!skipDuplicates || !l.duplicateOf);
+  });
+  const invalidLeads = preview.filter((l) => l.validationIssues?.some(i => i.type === 'error'));
+  const duplicateLeads = preview.filter((l) => l.duplicateOf);
+  const warningLeads = preview.filter((l) =>
+    l.validationIssues?.some(i => i.type === 'warning') &&
+    !l.validationIssues?.some(i => i.type === 'error')
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -123,9 +138,39 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onOpenChange }
             <div className="space-y-3">
               <h4 className="font-medium">Preview ({preview.length} rows)</h4>
 
-              {invalidLeads.length > 0 && (
-                <div className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 p-3 rounded-md text-sm">
-                  <strong>{invalidLeads.length}</strong> row(s) are missing required fields (name or email) and will be skipped.
+              {/* Validation summary */}
+              <div className="flex flex-wrap gap-2">
+                {invalidLeads.length > 0 && (
+                  <Badge variant="destructive" className="flex items-center gap-1">
+                    <XCircle className="h-3 w-3" />
+                    {invalidLeads.length} with errors
+                  </Badge>
+                )}
+                {duplicateLeads.length > 0 && (
+                  <Badge variant="secondary" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                    <Copy className="h-3 w-3" />
+                    {duplicateLeads.length} duplicate{duplicateLeads.length > 1 ? 's' : ''}
+                  </Badge>
+                )}
+                {warningLeads.length > 0 && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    {warningLeads.length} with warnings
+                  </Badge>
+                )}
+              </div>
+
+              {/* Duplicate handling option */}
+              {duplicateLeads.length > 0 && (
+                <div className="flex items-center gap-2 p-3 bg-yellow-500/10 rounded-md">
+                  <Checkbox
+                    id="skip-duplicates"
+                    checked={skipDuplicates}
+                    onChange={(e) => setSkipDuplicates(e.target.checked)}
+                  />
+                  <Label htmlFor="skip-duplicates" className="text-sm">
+                    Skip {duplicateLeads.length} potential duplicate{duplicateLeads.length > 1 ? 's' : ''}
+                  </Label>
                 </div>
               )}
 
@@ -136,18 +181,45 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onOpenChange }
                       <th className="text-left p-2">Name</th>
                       <th className="text-left p-2">Type</th>
                       <th className="text-left p-2">Email</th>
-                      <th className="text-left p-2">Status</th>
+                      <th className="text-left p-2">Issues</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {preview.slice(0, 10).map((lead, i) => (
-                      <tr key={i} className={`border-t ${!lead.name || !lead.contact.email ? 'text-muted-foreground' : ''}`}>
-                        <td className="p-2">{lead.name || <span className="text-destructive">Missing</span>}</td>
-                        <td className="p-2 capitalize">{lead.type}</td>
-                        <td className="p-2">{lead.contact.email || <span className="text-destructive">Missing</span>}</td>
-                        <td className="p-2">{lead.status}</td>
-                      </tr>
-                    ))}
+                    {preview.slice(0, 10).map((lead, i) => {
+                      const hasErrors = lead.validationIssues?.some(v => v.type === 'error');
+                      const hasWarnings = lead.validationIssues?.some(v => v.type === 'warning');
+                      const isDuplicate = !!lead.duplicateOf;
+
+                      return (
+                        <tr key={i} className={`border-t ${hasErrors ? 'bg-destructive/5' : isDuplicate ? 'bg-yellow-500/5' : ''}`}>
+                          <td className="p-2">
+                            {lead.name || <span className="text-destructive">Missing</span>}
+                          </td>
+                          <td className="p-2 capitalize">{lead.type}</td>
+                          <td className="p-2">
+                            {lead.contact.email || <span className="text-destructive">Missing</span>}
+                          </td>
+                          <td className="p-2">
+                            <div className="flex flex-wrap gap-1">
+                              {hasErrors && (
+                                <Badge variant="destructive" className="text-xs">Error</Badge>
+                              )}
+                              {isDuplicate && (
+                                <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
+                                  Duplicate
+                                </Badge>
+                              )}
+                              {hasWarnings && !hasErrors && (
+                                <Badge variant="secondary" className="text-xs">Warning</Badge>
+                              )}
+                              {!hasErrors && !isDuplicate && !hasWarnings && (
+                                <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">OK</Badge>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
                 {preview.length > 10 && (
@@ -159,7 +231,10 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onOpenChange }
 
               <div className="bg-muted p-3 rounded-md">
                 <p className="text-sm">
-                  <strong>{validLeads.length}</strong> lead(s) will be imported.
+                  <strong>{validLeads.length}</strong> lead(s) will be imported
+                  {skipDuplicates && duplicateLeads.length > 0 && (
+                    <span className="text-muted-foreground"> ({duplicateLeads.length} duplicate{duplicateLeads.length > 1 ? 's' : ''} will be skipped)</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -168,11 +243,17 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onOpenChange }
           {/* Import Result */}
           {importResult && (
             <div className="space-y-3">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 {importResult.success > 0 && (
                   <div className="flex items-center gap-2 text-green-600">
                     <CheckCircle className="h-5 w-5" />
                     <span>{importResult.success} imported</span>
+                  </div>
+                )}
+                {importResult.skippedDuplicates > 0 && (
+                  <div className="flex items-center gap-2 text-yellow-600">
+                    <Copy className="h-5 w-5" />
+                    <span>{importResult.skippedDuplicates} duplicate{importResult.skippedDuplicates > 1 ? 's' : ''} skipped</span>
                   </div>
                 )}
                 {importResult.failed > 0 && (

@@ -26,7 +26,7 @@ export const PipelineColumn: React.FC<PipelineColumnProps> = ({ stage, leads }) 
 
   return (
     <div
-      className={`flex flex-col min-w-[280px] max-w-[320px] bg-muted/50 rounded-lg ${
+      className={`flex flex-col w-full md:min-w-[280px] md:max-w-[320px] md:w-auto bg-muted/50 rounded-lg ${
         isOver ? 'ring-2 ring-primary ring-offset-2' : ''
       }`}
     >

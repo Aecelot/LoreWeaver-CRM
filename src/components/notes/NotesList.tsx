@@ -10,6 +10,7 @@ import {
 import { NoteCard } from './NoteCard';
 import { NoteForm } from './NoteForm';
 import { useNotes } from '@/hooks/useNotes';
+import { useActivityLogger } from '@/hooks/useActivities';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, MessageSquare } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,10 +18,12 @@ import type { Note, NoteStatus } from '@/types/note';
 
 interface NotesListProps {
   leadId: string;
+  leadName?: string;
 }
 
-export const NotesList: React.FC<NotesListProps> = ({ leadId }) => {
+export const NotesList: React.FC<NotesListProps> = ({ leadId, leadName = 'Unknown' }) => {
   const { notes, loading, addNote, editNote, removeNote } = useNotes(leadId);
+  const { logNoteAdded, logNoteUpdated, logNoteDeleted } = useActivityLogger();
   const { user } = useAuth();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -32,6 +35,7 @@ export const NotesList: React.FC<NotesListProps> = ({ leadId }) => {
       status: values.status,
       createdBy: user.uid,
     });
+    await logNoteAdded(leadId, leadName);
     setShowAddDialog(false);
   };
 
@@ -41,11 +45,13 @@ export const NotesList: React.FC<NotesListProps> = ({ leadId }) => {
       content: values.content,
       status: values.status,
     });
+    await logNoteUpdated(leadId, leadName);
     setEditingNote(null);
   };
 
   const handleDeleteNote = async (noteId: string) => {
     await removeNote(noteId);
+    await logNoteDeleted(leadId, leadName);
   };
 
   if (loading) {

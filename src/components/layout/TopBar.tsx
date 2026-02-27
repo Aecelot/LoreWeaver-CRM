@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import { Search, Bell, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,14 +8,38 @@ interface TopBarProps {
   onSearch?: (searchTerm: string) => void;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
+export interface TopBarRef {
+  focusSearch: () => void;
+  clearSearch: () => void;
+}
+
+export const TopBar = forwardRef<TopBarRef, TopBarProps>(({ onSearch }, ref) => {
   const [searchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    focusSearch: () => {
+      searchInputRef.current?.focus();
+    },
+    clearSearch: () => {
+      setSearchTerm('');
+      onSearch?.('');
+    },
+  }));
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
     onSearch?.(value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      setSearchTerm('');
+      onSearch?.('');
+      searchInputRef.current?.blur();
+    }
   };
 
   return (
@@ -25,9 +49,11 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search leads, companies..."
+            ref={searchInputRef}
+            placeholder="Search leads... (press / to focus)"
             value={searchTerm}
             onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
             className="pl-10"
           />
         </div>
@@ -45,9 +71,9 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
         <div className="flex items-center space-x-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
             {user?.photoURL ? (
-              <img 
-                src={user.photoURL} 
-                alt={user.displayName} 
+              <img
+                src={user.photoURL}
+                alt={user.displayName || ''}
                 className="h-8 w-8 rounded-full"
               />
             ) : (
@@ -61,4 +87,6 @@ export const TopBar: React.FC<TopBarProps> = ({ onSearch }) => {
       </div>
     </header>
   );
-};
+});
+
+TopBar.displayName = 'TopBar';

@@ -18,12 +18,14 @@ import type { Lead, LeadFilters } from '../types/lead';
 import type { Note, NoteFormData } from '../types/note';
 import type { Pipeline } from '../types/pipeline';
 import type { Tag } from '../types/tag';
+import type { Activity, ActivityFormData } from '../types/activity';
 
 // Collections
 const LEADS_COLLECTION = 'leads';
 const NOTES_COLLECTION = 'notes';
 const PIPELINES_COLLECTION = 'pipelines';
 const TAGS_COLLECTION = 'tags';
+const ACTIVITIES_COLLECTION = 'activities';
 
 // Lead operations
 export const getLeads = (filters?: LeadFilters) => {
@@ -314,4 +316,46 @@ export const updateTag = async (id: string, data: Partial<Tag>): Promise<void> =
 export const deleteTag = async (id: string): Promise<void> => {
   const docRef = doc(db, TAGS_COLLECTION, id);
   await deleteDoc(docRef);
+};
+
+// Activity operations
+export const getActivitiesForLeadRealtime = (
+  leadId: string,
+  callback: (activities: Activity[]) => void
+) => {
+  const q = query(
+    collection(db, ACTIVITIES_COLLECTION),
+    where('leadId', '==', leadId),
+    orderBy('createdAt', 'desc')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const activities = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Activity[];
+    callback(activities);
+  }, (error) => {
+    console.error('Activities fetch error:', error);
+    callback([]);
+  });
+};
+
+export const createActivity = async (activityData: ActivityFormData): Promise<string> => {
+  const docRef = await addDoc(collection(db, ACTIVITIES_COLLECTION), {
+    ...activityData,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+};
+
+export const deleteActivitiesForLead = async (leadId: string): Promise<void> => {
+  const q = query(
+    collection(db, ACTIVITIES_COLLECTION),
+    where('leadId', '==', leadId)
+  );
+  const snapshot = await getDocs(q);
+  const batch = writeBatch(db);
+  snapshot.docs.forEach(doc => batch.delete(doc.ref));
+  await batch.commit();
 };
