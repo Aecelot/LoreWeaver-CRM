@@ -26,8 +26,7 @@ function App() {
               <Route index element={<Dashboard />} />
               <Route path="leads" element={<Leads />} />
               <Route path="leads/:id" element={<LeadDetail />} />
-              <Route path="pipeline/studios" element={<PipelineView />} />
-              <Route path="pipeline/investors" element={<PipelineView />} />
+              <Route path="pipeline/:type" element={<PipelineView />} />
               <Route path="settings" element={<Settings />} />
             </Route>
 

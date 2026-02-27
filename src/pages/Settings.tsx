@@ -3,12 +3,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { ExportDialog, ImportDialog } from '@/components/settings';
-import { Download, Upload, User, Database } from 'lucide-react';
+import { initializeDefaultPipelines } from '@/lib/firestore';
+import { Download, Upload, User, Database, GitBranch } from 'lucide-react';
 
 export const Settings: React.FC = () => {
   const { user } = useAuth();
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [initializingPipelines, setInitializingPipelines] = useState(false);
+  const [pipelinesInitialized, setPipelinesInitialized] = useState(false);
+
+  const handleInitializePipelines = async () => {
+    setInitializingPipelines(true);
+    try {
+      await initializeDefaultPipelines();
+      setPipelinesInitialized(true);
+    } catch (error) {
+      console.error('Failed to initialize pipelines:', error);
+      alert('Failed to initialize pipelines. They may already exist.');
+    } finally {
+      setInitializingPipelines(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -85,6 +101,32 @@ export const Settings: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <GitBranch className="h-5 w-5" />
+            Pipeline Setup
+          </CardTitle>
+          <CardDescription>Initialize default pipeline stages</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">
+            Create the default Studio and Investor pipelines with predefined stages.
+            Only run this once when setting up the CRM.
+          </p>
+          <Button
+            onClick={handleInitializePipelines}
+            disabled={initializingPipelines || pipelinesInitialized}
+          >
+            {initializingPipelines
+              ? 'Initializing...'
+              : pipelinesInitialized
+              ? 'Pipelines Created'
+              : 'Initialize Pipelines'}
+          </Button>
+        </CardContent>
+      </Card>
 
       <ExportDialog open={showExportDialog} onOpenChange={setShowExportDialog} />
       <ImportDialog open={showImportDialog} onOpenChange={setShowImportDialog} />

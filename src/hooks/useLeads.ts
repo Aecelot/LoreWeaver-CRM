@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getLeadsRealtime, createLead, updateLead, deleteLead } from '@/lib/firestore';
 import type { Lead, LeadFilters } from '@/types/lead';
 
@@ -7,6 +7,21 @@ export const useLeads = (filters?: LeadFilters) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Memoize filter values to prevent unnecessary re-renders
+  const filterType = filters?.type;
+  const filterStatus = filters?.status;
+  const filterPriority = filters?.priority;
+  const filterOwner = filters?.owner;
+  const filterSearch = filters?.search;
+
+  const stableFilters = useMemo(() => ({
+    type: filterType,
+    status: filterStatus,
+    priority: filterPriority,
+    owner: filterOwner,
+    search: filterSearch,
+  }), [filterType, filterStatus, filterPriority, filterOwner, filterSearch]);
+
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -14,26 +29,26 @@ export const useLeads = (filters?: LeadFilters) => {
     const unsubscribe = getLeadsRealtime((leadsData) => {
       // Apply client-side search filter if provided
       let filteredLeads = leadsData;
-      if (filters?.search) {
-        const searchTerm = filters.search.toLowerCase();
-        filteredLeads = leadsData.filter(lead => 
-          lead.name.toLowerCase().includes(searchTerm) ||
-          lead.contact.name.toLowerCase().includes(searchTerm) ||
-          lead.contact.email.toLowerCase().includes(searchTerm) ||
-          lead.website.toLowerCase().includes(searchTerm)
+      if (stableFilters.search) {
+        const searchTerm = stableFilters.search.toLowerCase();
+        filteredLeads = leadsData.filter(lead =>
+          lead.name?.toLowerCase().includes(searchTerm) ||
+          lead.contact?.name?.toLowerCase().includes(searchTerm) ||
+          lead.contact?.email?.toLowerCase().includes(searchTerm) ||
+          lead.website?.toLowerCase().includes(searchTerm)
         );
       }
-      
+
       setLeads(filteredLeads);
       setLoading(false);
-    }, filters);
+    }, stableFilters);
 
     return () => {
       if (unsubscribe) {
         unsubscribe();
       }
     };
-  }, [filters]);
+  }, [stableFilters]);
 
   const addLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {

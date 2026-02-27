@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    }
+  }, [user, loading, navigate, location]);
 
   const handleSignIn = async () => {
     try {

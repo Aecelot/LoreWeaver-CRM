@@ -12,13 +12,6 @@ export const usePipeline = () => {
     setError(null);
 
     const unsubscribe = getPipelinesRealtime((pipelinesData) => {
-      if (pipelinesData.length === 0) {
-        // Initialize default pipelines if none exist
-        initializeDefaultPipelines().catch((err) => {
-          setError(err instanceof Error ? err.message : 'Failed to initialize pipelines');
-        });
-      }
-      
       setPipelines(pipelinesData);
       setLoading(false);
     });

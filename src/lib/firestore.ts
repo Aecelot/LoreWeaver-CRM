@@ -49,29 +49,45 @@ export const getLeadsRealtime = (
   callback: (leads: Lead[]) => void,
   filters?: LeadFilters
 ) => {
-  let q = query(collection(db, LEADS_COLLECTION), orderBy('createdAt', 'desc'));
-  
-  if (filters) {
-    if (filters.type) {
-      q = query(q, where('type', '==', filters.type));
-    }
-    if (filters.status) {
-      q = query(q, where('status', '==', filters.status));
-    }
-    if (filters.priority && filters.priority !== 'none') {
-      q = query(q, where('priority', '==', filters.priority));
-    }
-    if (filters.owner) {
-      q = query(q, where('owner', '==', filters.owner));
-    }
+  // Build query - only use simple filters to avoid index requirements
+  let q;
+
+  if (filters?.type) {
+    q = query(collection(db, LEADS_COLLECTION), where('type', '==', filters.type));
+  } else {
+    q = query(collection(db, LEADS_COLLECTION));
   }
-  
+
   return onSnapshot(q, (snapshot) => {
-    const leads = snapshot.docs.map(doc => ({
+    let leads = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Lead[];
+
+    // Apply additional filters client-side
+    if (filters) {
+      if (filters.status) {
+        leads = leads.filter(lead => lead.status === filters.status);
+      }
+      if (filters.priority && filters.priority !== 'none') {
+        leads = leads.filter(lead => lead.priority === filters.priority);
+      }
+      if (filters.owner) {
+        leads = leads.filter(lead => lead.owner === filters.owner);
+      }
+    }
+
+    // Sort by createdAt client-side
+    leads.sort((a, b) => {
+      const dateA = a.createdAt?.toDate?.() ?? new Date(0);
+      const dateB = b.createdAt?.toDate?.() ?? new Date(0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
     callback(leads);
+  }, (error) => {
+    console.error('Leads fetch error:', error);
+    callback([]);
   });
 };
 
@@ -189,8 +205,7 @@ export const deleteNote = async (id: string): Promise<void> => {
 
 // Pipeline operations
 export const getPipelines = async () => {
-  const q = query(collection(db, PIPELINES_COLLECTION), orderBy('type'));
-  const snapshot = await getDocs(q);
+  const snapshot = await getDocs(collection(db, PIPELINES_COLLECTION));
   return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
@@ -198,14 +213,15 @@ export const getPipelines = async () => {
 };
 
 export const getPipelinesRealtime = (callback: (pipelines: Pipeline[]) => void) => {
-  const q = query(collection(db, PIPELINES_COLLECTION), orderBy('type'));
-  
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(collection(db, PIPELINES_COLLECTION), (snapshot) => {
     const pipelines = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Pipeline[];
     callback(pipelines);
+  }, (error) => {
+    console.error('Pipeline fetch error:', error);
+    callback([]);
   });
 };
 

@@ -37,7 +37,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           alert('Access restricted to @loreweaver.ink email addresses only.');
           return;
         }
-
         const userData: User = {
           uid: firebaseUser.uid,
           email: firebaseUser.email!,
