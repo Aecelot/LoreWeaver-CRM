@@ -66,6 +66,7 @@ export const getLeadsRealtime = (
   }
 
   return onSnapshot(q, (snapshot) => {
+    console.log(`[Firestore] Fetched ${snapshot.docs.length} leads`);
     let leads = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -91,9 +92,10 @@ export const getLeadsRealtime = (
       return dateB.getTime() - dateA.getTime();
     });
 
+    console.log(`[Firestore] Returning ${leads.length} leads after filters`);
     callback(leads);
   }, (error) => {
-    console.error('Leads fetch error:', error);
+    console.error('[Firestore] Leads fetch error:', error.message, error.code);
     callback([]);
   });
 };

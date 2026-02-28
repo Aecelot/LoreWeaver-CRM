@@ -5,6 +5,8 @@ export { LeadHeader } from './LeadHeader';
 export { LeadContactInfo } from './LeadContactInfo';
 export { LeadStudioInfo } from './LeadStudioInfo';
 export { LeadInvestorInfo } from './LeadInvestorInfo';
+export { LeadQualificationInfo } from './LeadQualificationInfo';
 export { LeadNotes, LeadTags } from './LeadNotes';
 export { LeadCreateDialog } from './LeadCreateDialog';
 export { LeadEditDialog } from './LeadEditDialog';
+export { LeadSequenceCard } from './LeadSequenceCard';

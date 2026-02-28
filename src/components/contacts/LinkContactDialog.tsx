@@ -17,7 +17,6 @@ import { useContacts } from '@/hooks/useContacts';
 import { useLeadContacts } from '@/hooks/useLeadContacts';
 import { useAuth } from '@/contexts/AuthContext';
 import { ContactCreateDialog } from './ContactCreateDialog';
-import type { Contact } from '@/types/contact';
 
 interface LinkContactDialogProps {
   leadId: string;

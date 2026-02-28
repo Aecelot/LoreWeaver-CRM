@@ -17,7 +17,7 @@ import { EmptyState } from '@/components/common';
 import type { Lead } from '@/types/lead';
 
 const ROW_HEIGHT = 65; // Estimated height of each table row in pixels
-const VIRTUALIZATION_THRESHOLD = 200; // Only virtualize when more than this many rows
+const VIRTUALIZATION_THRESHOLD = 99999; // TEMPORARILY disabled - Only virtualize when more than this many rows
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -36,24 +36,6 @@ const priorityColors: Record<string, string> = {
 const typeColors: Record<string, string> = {
   studio: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
   investor: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-};
-
-const icpColors: Record<string, string> = {
-  architect: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-  director: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  both: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-  none: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
-};
-
-// Helper to extract ICP from tags
-const getICP = (tags?: string[]): { type: 'architect' | 'director' | 'both' | 'none'; label: string } => {
-  if (!tags) return { type: 'none', label: '—' };
-  const hasArchitect = tags.includes('architect-icp');
-  const hasDirector = tags.includes('director-icp');
-  if (hasArchitect && hasDirector) return { type: 'both', label: 'Both' };
-  if (hasArchitect) return { type: 'architect', label: 'Architect' };
-  if (hasDirector) return { type: 'director', label: 'Director' };
-  return { type: 'none', label: '—' };
 };
 
 export const LeadsTable: React.FC<LeadsTableProps> = ({
@@ -167,30 +149,45 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           </Link>
           {lead.website && (
             <a
-              href={lead.website}
+              href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
             >
               <ExternalLink className="h-3 w-3" />
-              {new URL(lead.website).hostname}
+              {(() => {
+                try {
+                  return new URL(lead.website.startsWith('http') ? lead.website : `https://${lead.website}`).hostname;
+                } catch {
+                  return lead.website;
+                }
+              })()}
             </a>
           )}
         </TableCell>
         <TableCell>
-          <Badge variant="secondary" className={typeColors[lead.type]}>
-            {lead.type}
+          <Badge variant="secondary" className={typeColors[lead.type] || ''}>
+            {lead.type || 'unknown'}
           </Badge>
         </TableCell>
         <TableCell>
+          {lead.studio?.fitScore !== undefined ? (
+            <span className={`font-medium ${lead.studio.fitScore >= 7 ? 'text-green-600' : lead.studio.fitScore >= 4 ? 'text-yellow-600' : 'text-red-600'}`}>
+              {lead.studio.fitScore}/10
+            </span>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+        </TableCell>
+        <TableCell>
           <div>
-            <p className="font-medium">{lead.contact.name}</p>
-            <p className="text-xs text-muted-foreground">{lead.contact.role}</p>
+            <p className="font-medium">{lead.contact?.name || '-'}</p>
+            <p className="text-xs text-muted-foreground">{lead.contact?.role || ''}</p>
           </div>
         </TableCell>
         <TableCell>
-          <Badge variant="secondary" className={priorityColors[lead.priority]}>
-            {lead.priority}
+          <Badge variant="secondary" className={priorityColors[lead.priority] || priorityColors.none}>
+            {lead.priority || 'none'}
           </Badge>
         </TableCell>
         <TableCell>
@@ -221,6 +218,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Fit</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Status</TableHead>

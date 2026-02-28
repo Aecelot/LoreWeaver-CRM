@@ -7,6 +7,7 @@ import {
 import type { User as FirebaseUser } from 'firebase/auth';
 import { toast } from 'sonner';
 import { auth, googleProvider } from '@/lib/firebase';
+import { migrateLeadsWithCreatedBy } from '@/lib/firestore';
 import type { User, AuthContextType } from '@/types/user';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +49,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           lastLoginAt: new Date(),
         };
         setUser(userData);
+
+        // Run migration to add createdBy to existing leads
+        migrateLeadsWithCreatedBy(firebaseUser.uid)
+          .then(result => {
+            if (result.updated > 0) {
+              console.log(`Migration: Updated ${result.updated} leads with createdBy`);
+            }
+          })
+          .catch(err => console.error('Migration error:', err));
       } else {
         setUser(null);
       }

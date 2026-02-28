@@ -24,6 +24,9 @@ export interface InvestorInfo {
   hqRegion: string;
 }
 
+export type LeadSource = 'website' | 'referral' | 'linkedin' | 'conference' | 'cold_outreach' | 'inbound' | 'other';
+export type CompanySize = 'startup' | 'small' | 'medium' | 'large' | 'enterprise';
+
 export interface Lead {
   id: string;
   type: 'studio' | 'investor';
@@ -47,6 +50,14 @@ export interface Lead {
   createdAt: any;
   updatedAt: any;
   createdBy: string;
+  // Qualification fields
+  leadSource?: LeadSource;
+  companySize?: CompanySize;
+  budgetRange?: string;
+  decisionTimeline?: string;
+  lastContactedAt?: Date;
+  nextFollowUpAt?: Date;
+  isDecisionMaker?: boolean;
 }
 
 export interface LeadFormData extends Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'pipeline'> {

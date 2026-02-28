@@ -31,7 +31,7 @@ import {
 export const LeadDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { leads, loading, removeLead, editLead } = useLeads();
+  const { leads, loading, removeLead } = useLeads();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -52,16 +52,6 @@ export const LeadDetail: React.FC = () => {
     } catch {
       toast.error('Failed to delete lead');
       setIsDeleting(false);
-    }
-  };
-
-  const handleLogContact = async () => {
-    if (!id) return;
-    try {
-      await editLead(id, { lastContactedAt: new Date() });
-      toast.success('Contact logged');
-    } catch {
-      toast.error('Failed to log contact');
     }
   };
 
@@ -110,7 +100,6 @@ export const LeadDetail: React.FC = () => {
         lead={lead}
         onEdit={handleEdit}
         onDelete={() => setShowDeleteDialog(true)}
-        onLogContact={handleLogContact}
       />
 
       <div className="grid gap-6 md:grid-cols-2">
