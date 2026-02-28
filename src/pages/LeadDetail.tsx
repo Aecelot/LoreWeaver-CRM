@@ -9,11 +9,14 @@ import {
   LeadContactInfo,
   LeadStudioInfo,
   LeadInvestorInfo,
+  LeadQualificationInfo,
   LeadTags,
   LeadEditDialog,
+  LeadSequenceCard,
 } from '@/components/leads';
 import { NotesList } from '@/components/notes';
 import { ActivityTimeline } from '@/components/activities';
+import { LeadContacts } from '@/components/contacts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +31,7 @@ import {
 export const LeadDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { leads, loading, removeLead } = useLeads();
+  const { leads, loading, removeLead, editLead } = useLeads();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -49,6 +52,16 @@ export const LeadDetail: React.FC = () => {
     } catch {
       toast.error('Failed to delete lead');
       setIsDeleting(false);
+    }
+  };
+
+  const handleLogContact = async () => {
+    if (!id) return;
+    try {
+      await editLead(id, { lastContactedAt: new Date() });
+      toast.success('Contact logged');
+    } catch {
+      toast.error('Failed to log contact');
     }
   };
 
@@ -93,15 +106,23 @@ export const LeadDetail: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <LeadHeader lead={lead} onEdit={handleEdit} onDelete={() => setShowDeleteDialog(true)} />
+      <LeadHeader
+        lead={lead}
+        onEdit={handleEdit}
+        onDelete={() => setShowDeleteDialog(true)}
+        onLogContact={handleLogContact}
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-6">
+          <LeadContacts leadId={lead.id} />
           <LeadContactInfo lead={lead} />
           {lead.type === 'studio' && <LeadStudioInfo lead={lead} />}
           {lead.type === 'investor' && <LeadInvestorInfo lead={lead} />}
+          <LeadQualificationInfo lead={lead} />
         </div>
         <div className="space-y-6">
+          <LeadSequenceCard lead={lead} />
           <NotesList leadId={lead.id} leadName={lead.name} />
           <LeadTags lead={lead} />
           <ActivityTimeline leadId={lead.id} />

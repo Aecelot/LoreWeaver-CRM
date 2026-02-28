@@ -12,42 +12,24 @@ service cloud.firestore {
       return isAuthenticated() && resource.data.createdBy == request.auth.uid;
     }
 
-    // Leads collection
+    // Leads collection - user can only access their own leads
     match /leads/{leadId} {
-      // TEMPORARY: Allow all authenticated users to read leads (for migration)
-      // TODO: Restore to: allow read: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
-      allow read: if isAuthenticated();
-
-      // Only authenticated users can create leads, and createdBy must be their uid
+      allow read: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
       allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
-
-      // Allow update for authenticated users (for migration)
-      // TODO: Restore to: allow update, delete: if isCreator();
-      allow update, delete: if isAuthenticated();
+      allow update, delete: if isCreator();
     }
 
-    // Notes collection
+    // Notes collection - user can only access their own notes
     match /notes/{noteId} {
-      // Allow read if authenticated and user created the note
       allow read: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
-
-      // Allow create if authenticated and createdBy matches auth uid
       allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
-
-      // Allow update/delete if user created the note
       allow update, delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
     }
 
-    // Activities collection
+    // Activities collection - user can only access their own activities
     match /activities/{activityId} {
-      // Allow read if authenticated and user created the activity
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-
-      // Allow create if authenticated and userId matches auth uid
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-
-      // Activities are immutable - no updates or deletes from client
-      // (deletion happens via cloud function or admin when lead is deleted)
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
@@ -76,6 +58,20 @@ service cloud.firestore {
 
       // Any authenticated user can update/delete tags
       allow update, delete: if isAuthenticated();
+    }
+
+    // Contacts collection - user can only access their own contacts
+    match /contacts/{contactId} {
+      allow read: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+    }
+
+    // LeadContacts junction collection - user can only access their own links
+    match /leadContacts/{linkId} {
+      allow read: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
     }
   }
 }

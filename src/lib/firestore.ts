@@ -19,6 +19,7 @@ import type { Note, NoteFormData } from '../types/note';
 import type { Pipeline } from '../types/pipeline';
 import type { Tag } from '../types/tag';
 import type { Activity, ActivityFormData } from '../types/activity';
+import type { Contact, ContactFormData, LeadContactLink, LeadContactLinkFormData, ContactFilters } from '../types/contact';
 
 // Collections
 const LEADS_COLLECTION = 'leads';
@@ -26,6 +27,8 @@ const NOTES_COLLECTION = 'notes';
 const PIPELINES_COLLECTION = 'pipelines';
 const TAGS_COLLECTION = 'tags';
 const ACTIVITIES_COLLECTION = 'activities';
+const CONTACTS_COLLECTION = 'contacts';
+const LEAD_CONTACTS_COLLECTION = 'leadContacts';
 
 // Lead operations
 export const getLeads = (filters?: LeadFilters) => {
@@ -383,4 +386,289 @@ export const migrateLeadsWithCreatedBy = async (userId: string): Promise<{ updat
   }
 
   return { updated, skipped };
+};
+
+// Contact operations
+export const getContactsRealtime = (
+  callback: (contacts: Contact[]) => void,
+  filters?: ContactFilters
+) => {
+  const q = query(collection(db, CONTACTS_COLLECTION));
+
+  return onSnapshot(q, (snapshot) => {
+    let contacts = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Contact[];
+
+    // Apply filters client-side
+    if (filters) {
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        contacts = contacts.filter(contact =>
+          contact.name.toLowerCase().includes(searchLower) ||
+          contact.email.toLowerCase().includes(searchLower) ||
+          contact.company?.toLowerCase().includes(searchLower) ||
+          contact.role?.toLowerCase().includes(searchLower)
+        );
+      }
+      if (filters.tags && filters.tags.length > 0) {
+        contacts = contacts.filter(contact =>
+          contact.tags?.some(tag => filters.tags!.includes(tag))
+        );
+      }
+      if (filters.company) {
+        contacts = contacts.filter(contact =>
+          contact.company?.toLowerCase().includes(filters.company!.toLowerCase())
+        );
+      }
+    }
+
+    // Sort by name
+    contacts.sort((a, b) => a.name.localeCompare(b.name));
+
+    callback(contacts);
+  }, (error) => {
+    console.error('Contacts fetch error:', error);
+    callback([]);
+  });
+};
+
+export const getContact = async (id: string): Promise<Contact | null> => {
+  const docRef = doc(db, CONTACTS_COLLECTION, id);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return { id: docSnap.id, ...docSnap.data() } as Contact;
+  }
+  return null;
+};
+
+export const createContact = async (contactData: ContactFormData): Promise<string> => {
+  const docRef = await addDoc(collection(db, CONTACTS_COLLECTION), {
+    ...contactData,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+};
+
+export const updateContact = async (id: string, data: Partial<Contact>): Promise<void> => {
+  const docRef = doc(db, CONTACTS_COLLECTION, id);
+  await updateDoc(docRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const deleteContact = async (id: string): Promise<void> => {
+  // First delete all lead-contact links for this contact
+  const linksQuery = query(
+    collection(db, LEAD_CONTACTS_COLLECTION),
+    where('contactId', '==', id)
+  );
+  const linksSnapshot = await getDocs(linksQuery);
+
+  const batch = writeBatch(db);
+  linksSnapshot.docs.forEach(linkDoc => {
+    batch.delete(linkDoc.ref);
+  });
+
+  // Delete the contact itself
+  const docRef = doc(db, CONTACTS_COLLECTION, id);
+  batch.delete(docRef);
+
+  await batch.commit();
+};
+
+// Lead-Contact link operations
+export const getLeadContactLinksForLead = async (leadId: string): Promise<LeadContactLink[]> => {
+  const q = query(
+    collection(db, LEAD_CONTACTS_COLLECTION),
+    where('leadId', '==', leadId)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as LeadContactLink[];
+};
+
+export const getLeadContactLinksForLeadRealtime = (
+  leadId: string,
+  callback: (links: LeadContactLink[]) => void
+) => {
+  const q = query(
+    collection(db, LEAD_CONTACTS_COLLECTION),
+    where('leadId', '==', leadId)
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const links = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as LeadContactLink[];
+    callback(links);
+  }, (error) => {
+    console.error('Lead contact links fetch error:', error);
+    callback([]);
+  });
+};
+
+export const getLeadContactLinksForContact = async (contactId: string): Promise<LeadContactLink[]> => {
+  const q = query(
+    collection(db, LEAD_CONTACTS_COLLECTION),
+    where('contactId', '==', contactId)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as LeadContactLink[];
+};
+
+export const createLeadContactLink = async (linkData: LeadContactLinkFormData): Promise<string> => {
+  // If setting as primary, first unset any existing primary for this lead
+  if (linkData.isPrimary) {
+    const existingLinks = await getLeadContactLinksForLead(linkData.leadId);
+    const batch = writeBatch(db);
+
+    existingLinks.forEach(link => {
+      if (link.isPrimary) {
+        batch.update(doc(db, LEAD_CONTACTS_COLLECTION, link.id), { isPrimary: false });
+      }
+    });
+
+    if (existingLinks.some(l => l.isPrimary)) {
+      await batch.commit();
+    }
+  }
+
+  const docRef = await addDoc(collection(db, LEAD_CONTACTS_COLLECTION), {
+    ...linkData,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+};
+
+export const updateLeadContactLink = async (id: string, data: Partial<LeadContactLink>): Promise<void> => {
+  // If setting as primary, first unset any existing primary for this lead
+  if (data.isPrimary) {
+    const linkDoc = await getDoc(doc(db, LEAD_CONTACTS_COLLECTION, id));
+    if (linkDoc.exists()) {
+      const linkData = linkDoc.data() as LeadContactLink;
+      const existingLinks = await getLeadContactLinksForLead(linkData.leadId);
+      const batch = writeBatch(db);
+
+      existingLinks.forEach(link => {
+        if (link.isPrimary && link.id !== id) {
+          batch.update(doc(db, LEAD_CONTACTS_COLLECTION, link.id), { isPrimary: false });
+        }
+      });
+
+      if (existingLinks.some(l => l.isPrimary && l.id !== id)) {
+        await batch.commit();
+      }
+    }
+  }
+
+  const docRef = doc(db, LEAD_CONTACTS_COLLECTION, id);
+  await updateDoc(docRef, data);
+};
+
+export const deleteLeadContactLink = async (id: string): Promise<void> => {
+  const docRef = doc(db, LEAD_CONTACTS_COLLECTION, id);
+  await deleteDoc(docRef);
+};
+
+export const setContactAsPrimary = async (leadId: string, contactLinkId: string): Promise<void> => {
+  const existingLinks = await getLeadContactLinksForLead(leadId);
+  const batch = writeBatch(db);
+
+  existingLinks.forEach(link => {
+    const newIsPrimary = link.id === contactLinkId;
+    if (link.isPrimary !== newIsPrimary) {
+      batch.update(doc(db, LEAD_CONTACTS_COLLECTION, link.id), { isPrimary: newIsPrimary });
+    }
+  });
+
+  await batch.commit();
+};
+
+// Migration: Convert embedded lead.contact to separate Contact entities
+export const migrateEmbeddedContacts = async (userId: string): Promise<{ created: number; linked: number; skipped: number }> => {
+  const leadsSnapshot = await getDocs(collection(db, LEADS_COLLECTION));
+  let created = 0;
+  let linked = 0;
+  let skipped = 0;
+
+  // Map to track contacts by email to avoid duplicates
+  const contactsByEmail = new Map<string, string>();
+
+  // First, get all existing contacts
+  const existingContactsSnapshot = await getDocs(collection(db, CONTACTS_COLLECTION));
+  existingContactsSnapshot.docs.forEach(docSnap => {
+    const contact = docSnap.data() as Contact;
+    if (contact.email) {
+      contactsByEmail.set(contact.email.toLowerCase(), docSnap.id);
+    }
+  });
+
+  for (const leadDoc of leadsSnapshot.docs) {
+    const lead = leadDoc.data() as Lead;
+
+    // Skip if no embedded contact or no email
+    if (!lead.contact?.email) {
+      skipped++;
+      continue;
+    }
+
+    const email = lead.contact.email.toLowerCase();
+    let contactId: string;
+
+    // Check if contact already exists
+    if (contactsByEmail.has(email)) {
+      contactId = contactsByEmail.get(email)!;
+    } else {
+      // Create new contact
+      const newContactRef = await addDoc(collection(db, CONTACTS_COLLECTION), {
+        name: lead.contact.name || '',
+        email: lead.contact.email,
+        role: lead.contact.role || '',
+        phone: lead.contact.phone || '',
+        linkedin: lead.contact.linkedin || '',
+        company: lead.name, // Use lead name as company
+        tags: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: userId,
+      });
+      contactId = newContactRef.id;
+      contactsByEmail.set(email, contactId);
+      created++;
+    }
+
+    // Check if link already exists
+    const existingLinksQuery = query(
+      collection(db, LEAD_CONTACTS_COLLECTION),
+      where('leadId', '==', leadDoc.id),
+      where('contactId', '==', contactId)
+    );
+    const existingLinksSnapshot = await getDocs(existingLinksQuery);
+
+    if (existingLinksSnapshot.empty) {
+      // Create link
+      await addDoc(collection(db, LEAD_CONTACTS_COLLECTION), {
+        leadId: leadDoc.id,
+        contactId: contactId,
+        isPrimary: true,
+        role: lead.contact.role || '',
+        createdAt: serverTimestamp(),
+        createdBy: userId,
+      });
+      linked++;
+    }
+  }
+
+  return { created, linked, skipped };
 };

@@ -366,3 +366,51 @@ initializeDefaultPipelines: vi.fn().mockResolvedValue(['id1', 'id2'])
 - Duplicate detection uses Levenshtein distance for name similarity (0.7 threshold)
 - Security rules enforce user-based access via createdBy/userId fields
 - Charts use recharts library with custom tooltip styling
+
+---
+
+## Phase 11: Contact Book
+
+**Status**: Complete
+
+**Date**: February 28, 2026
+
+### Completed
+- **Contact Type & Schema**: Created Contact and LeadContactLink types for many-to-many relationships
+- **Firestore Operations**: Added full CRUD operations for contacts and lead-contact links
+- **Contact Hooks**: Created useContacts and useLeadContacts hooks with real-time updates
+- **Contacts Page**: Built /contacts page with table, search, and tag filtering
+- **Contact Form**: Built reusable ContactForm component with validation
+- **Contact Dialogs**: Created ContactCreateDialog and ContactEditDialog
+- **Link Contact Dialog**: Built LinkContactDialog for linking existing contacts to leads
+- **Lead Contacts Section**: Built LeadContacts component showing linked contacts on lead detail
+- **Primary Contact**: Support for designating a primary contact per lead
+- **Migration Function**: Created migrateEmbeddedContacts to convert existing lead.contact to Contact entities
+- **Sidebar Navigation**: Added Contacts to main navigation
+- **Security Rules**: Added Firestore rules for contacts and leadContacts collections
+
+### Key Files
+- `src/types/contact.ts` - Contact and LeadContactLink type definitions
+- `src/hooks/useContacts.ts` - Contacts management hook
+- `src/hooks/useLeadContacts.ts` - Lead-contact links hook
+- `src/pages/Contacts.tsx` - Contacts list page
+- `src/components/contacts/ContactForm.tsx` - Reusable contact form
+- `src/components/contacts/ContactsTable.tsx` - Contacts list table
+- `src/components/contacts/ContactCreateDialog.tsx` - Create contact dialog
+- `src/components/contacts/ContactEditDialog.tsx` - Edit contact dialog
+- `src/components/contacts/LinkContactDialog.tsx` - Link contact to lead dialog
+- `src/components/contacts/LeadContacts.tsx` - Contacts section for lead detail
+- `firestore.rules` - Updated with contacts and leadContacts rules
+
+### Data Model
+- **contacts** collection: Standalone contact entities with name, email, company, tags
+- **leadContacts** junction collection: Links contacts to leads with isPrimary flag and role
+- Supports many-to-many: one contact can be linked to multiple leads
+- Supports primary contact designation per lead
+
+### Technical Notes
+- Contact email used as deduplication key during migration
+- LeadContactLink stores relationship metadata (isPrimary, role specific to that lead)
+- When setting a contact as primary, other contacts for that lead are automatically unset
+- Deleting a contact removes all its lead links via batch operation
+- Existing lead.contact field preserved for backwards compatibility

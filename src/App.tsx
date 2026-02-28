@@ -12,8 +12,10 @@ import './index.css';
 const Dashboard = lazy(() => import('@/pages/Dashboard').then(m => ({ default: m.Dashboard })));
 const Leads = lazy(() => import('@/pages/Leads').then(m => ({ default: m.Leads })));
 const LeadDetail = lazy(() => import('@/pages/LeadDetail').then(m => ({ default: m.LeadDetail })));
+const Contacts = lazy(() => import('@/pages/Contacts').then(m => ({ default: m.Contacts })));
 const Login = lazy(() => import('@/pages/Login').then(m => ({ default: m.Login })));
 const PipelineView = lazy(() => import('@/pages/PipelineView').then(m => ({ default: m.PipelineView })));
+const Sequences = lazy(() => import('@/pages/Sequences').then(m => ({ default: m.Sequences })));
 const Settings = lazy(() => import('@/pages/Settings').then(m => ({ default: m.Settings })));
 
 // Loading fallback component
@@ -49,7 +51,9 @@ function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="leads" element={<Leads />} />
                 <Route path="leads/:id" element={<LeadDetail />} />
+                <Route path="contacts" element={<Contacts />} />
                 <Route path="pipeline/:type" element={<PipelineView />} />
+                <Route path="sequences" element={<Sequences />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 

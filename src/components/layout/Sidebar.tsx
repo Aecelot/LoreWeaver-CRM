@@ -5,9 +5,11 @@ import {
   Users,
   Building,
   DollarSign,
+  Mail,
   Settings,
   LogOut,
-  User
+  User,
+  BookUser,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -17,8 +19,10 @@ import { Button } from '@/components/ui/button';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Leads', href: '/leads', icon: Users },
+  { name: 'Contacts', href: '/contacts', icon: BookUser },
   { name: 'Studios Pipeline', href: '/pipeline/studios', icon: Building },
   { name: 'Investors Pipeline', href: '/pipeline/investors', icon: DollarSign },
+  { name: 'Sequences', href: '/sequences', icon: Mail },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
