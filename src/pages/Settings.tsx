@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { ExportDialog, ImportDialog, TagManager } from '@/components/settings';
-import { initializeDefaultPipelines } from '@/lib/firestore';
-import { Download, Upload, User, Database, GitBranch } from 'lucide-react';
+import { initializeDefaultPipelines, migrateLeadsWithCreatedBy } from '@/lib/firestore';
+import { Download, Upload, User, Database, GitBranch, Wrench } from 'lucide-react';
 
 export const Settings: React.FC = () => {
   const { user } = useAuth();
@@ -13,6 +13,8 @@ export const Settings: React.FC = () => {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [initializingPipelines, setInitializingPipelines] = useState(false);
   const [pipelinesInitialized, setPipelinesInitialized] = useState(false);
+  const [migrating, setMigrating] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<{ updated: number; skipped: number } | null>(null);
 
   const handleInitializePipelines = async () => {
     setInitializingPipelines(true);
@@ -20,10 +22,28 @@ export const Settings: React.FC = () => {
       await initializeDefaultPipelines();
       setPipelinesInitialized(true);
       toast.success('Pipelines initialized successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to initialize pipelines. They may already exist.');
     } finally {
       setInitializingPipelines(false);
+    }
+  };
+
+  const handleMigration = async () => {
+    if (!user?.uid) return;
+    setMigrating(true);
+    try {
+      const result = await migrateLeadsWithCreatedBy(user.uid);
+      setMigrationResult(result);
+      if (result.updated > 0) {
+        toast.success(`Migration complete: ${result.updated} leads updated`);
+      } else {
+        toast.info('No leads needed migration');
+      }
+    } catch {
+      toast.error('Migration failed');
+    } finally {
+      setMigrating(false);
     }
   };
 
@@ -104,6 +124,34 @@ export const Settings: React.FC = () => {
       </div>
 
       <TagManager />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wrench className="h-5 w-5" />
+            Data Migration
+          </CardTitle>
+          <CardDescription>Fix leads missing ownership data</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">
+            Migrate existing leads to add your user ID as the owner. This is required
+            for leads created before the security update. Run once to fix visibility issues.
+          </p>
+          {migrationResult && (
+            <p className="text-sm text-green-600 mb-3">
+              Last migration: {migrationResult.updated} updated, {migrationResult.skipped} already migrated
+            </p>
+          )}
+          <Button
+            onClick={handleMigration}
+            disabled={migrating}
+            variant="outline"
+          >
+            {migrating ? 'Migrating...' : 'Run Migration'}
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

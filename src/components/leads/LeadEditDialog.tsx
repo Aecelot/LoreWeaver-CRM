@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { LeadForm } from '@/components/forms';
 import { useLeads } from '@/hooks/useLeads';
+import { useAuth } from '@/contexts/AuthContext';
 import { useActivityLogger } from '@/hooks/useActivities';
 import type { Lead } from '@/types/lead';
 import type { ActivityChange } from '@/types/activity';
@@ -55,15 +56,19 @@ export const LeadEditDialog: React.FC<LeadEditDialogProps> = ({
   onOpenChange,
   lead,
 }) => {
+  const { user } = useAuth();
   const { editLead } = useLeads();
   const { logLeadUpdated } = useActivityLogger();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (values: Partial<Lead>) => {
+    if (!user) return;
     setIsSubmitting(true);
     try {
       const changes = detectChanges(lead, values);
-      await editLead(lead.id, values);
+      // Ensure createdBy is set (for legacy leads that may not have it)
+      const updateData = { ...values, createdBy: lead.createdBy || user.uid };
+      await editLead(lead.id, updateData);
       if (changes.length > 0) {
         await logLeadUpdated(lead.id, lead.name, changes);
       }

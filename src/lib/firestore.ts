@@ -359,3 +359,28 @@ export const deleteActivitiesForLead = async (leadId: string): Promise<void> => 
   snapshot.docs.forEach(doc => batch.delete(doc.ref));
   await batch.commit();
 };
+
+// Migration: Add createdBy field to existing leads
+export const migrateLeadsWithCreatedBy = async (userId: string): Promise<{ updated: number; skipped: number }> => {
+  const snapshot = await getDocs(collection(db, LEADS_COLLECTION));
+  let updated = 0;
+  let skipped = 0;
+
+  const batch = writeBatch(db);
+
+  snapshot.docs.forEach(docSnap => {
+    const data = docSnap.data();
+    if (!data.createdBy) {
+      batch.update(docSnap.ref, { createdBy: userId });
+      updated++;
+    } else {
+      skipped++;
+    }
+  });
+
+  if (updated > 0) {
+    await batch.commit();
+  }
+
+  return { updated, skipped };
+};

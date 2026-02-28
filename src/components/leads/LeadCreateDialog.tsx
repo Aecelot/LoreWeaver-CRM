@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { LeadForm } from '@/components/forms';
 import { useLeads } from '@/hooks/useLeads';
+import { useAuth } from '@/contexts/AuthContext';
 import { useActivityLogger } from '@/hooks/useActivities';
 import { useDuplicateDetection } from '@/hooks/useDuplicateDetection';
 import { formatDuplicateMatch, type DuplicateMatch } from '@/lib/duplicateDetection';
@@ -35,6 +36,7 @@ export const LeadCreateDialog: React.FC<LeadCreateDialogProps> = ({
   onOpenChange,
   defaultType = 'studio',
 }) => {
+  const { user } = useAuth();
   const { addLead } = useLeads();
   const { logLeadCreated } = useActivityLogger();
   const { checkForDuplicates } = useDuplicateDetection();
@@ -44,9 +46,11 @@ export const LeadCreateDialog: React.FC<LeadCreateDialogProps> = ({
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
 
   const createLead = async (values: Partial<Lead>) => {
+    if (!user) return;
     setIsSubmitting(true);
     try {
-      const leadId = await addLead(values as Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>);
+      const leadData = { ...values, createdBy: user.uid };
+      const leadId = await addLead(leadData as Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>);
       await logLeadCreated(leadId, values.name || 'Unknown');
       toast.success('Lead created successfully');
       onOpenChange(false);

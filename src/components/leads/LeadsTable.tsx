@@ -17,7 +17,7 @@ import { EmptyState } from '@/components/common';
 import type { Lead } from '@/types/lead';
 
 const ROW_HEIGHT = 65; // Estimated height of each table row in pixels
-const VIRTUALIZATION_THRESHOLD = 50; // Only virtualize when more than this many rows
+const VIRTUALIZATION_THRESHOLD = 200; // Only virtualize when more than this many rows
 
 interface LeadsTableProps {
   leads: Lead[];
