@@ -34,6 +34,24 @@ const typeColors: Record<string, string> = {
   investor: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
 };
 
+const icpColors: Record<string, string> = {
+  architect: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+  director: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  both: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
+  none: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+};
+
+// Helper to extract ICP from tags
+const getICP = (tags?: string[]): { type: 'architect' | 'director' | 'both' | 'none'; label: string } => {
+  if (!tags) return { type: 'none', label: '—' };
+  const hasArchitect = tags.includes('architect-icp');
+  const hasDirector = tags.includes('director-icp');
+  if (hasArchitect && hasDirector) return { type: 'both', label: 'Both' };
+  if (hasArchitect) return { type: 'architect', label: 'Architect' };
+  if (hasDirector) return { type: 'director', label: 'Director' };
+  return { type: 'none', label: '—' };
+};
+
 export const LeadsTable: React.FC<LeadsTableProps> = ({
   leads,
   selectedIds,
@@ -68,6 +86,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               <TableHead className="w-12"></TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Fit</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Status</TableHead>
@@ -80,6 +99,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 <TableCell><div className="h-4 w-4 bg-muted animate-pulse rounded" /></TableCell>
                 <TableCell><div className="h-4 w-32 bg-muted animate-pulse rounded" /></TableCell>
                 <TableCell><div className="h-4 w-16 bg-muted animate-pulse rounded" /></TableCell>
+                <TableCell><div className="h-4 w-20 bg-muted animate-pulse rounded" /></TableCell>
                 <TableCell><div className="h-4 w-24 bg-muted animate-pulse rounded" /></TableCell>
                 <TableCell><div className="h-4 w-16 bg-muted animate-pulse rounded" /></TableCell>
                 <TableCell><div className="h-4 w-16 bg-muted animate-pulse rounded" /></TableCell>
@@ -120,6 +140,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             </TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Type</TableHead>
+            <TableHead>Fit</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Priority</TableHead>
             <TableHead>Status</TableHead>
@@ -170,6 +191,24 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <Badge variant="secondary" className={typeColors[lead.type]}>
                     {lead.type}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  {(() => {
+                    const icp = getICP(lead.tags);
+                    const fitScore = lead.studio?.fitScore;
+                    return (
+                      <div className="flex items-center gap-2">
+                        {fitScore !== undefined && (
+                          <span className={`font-bold ${fitScore >= 85 ? 'text-green-600' : fitScore >= 70 ? 'text-yellow-600' : 'text-gray-500'}`}>
+                            {fitScore}
+                          </span>
+                        )}
+                        <Badge variant="secondary" className={icpColors[icp.type]}>
+                          {icp.label}
+                        </Badge>
+                      </div>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell>
                   <div>
