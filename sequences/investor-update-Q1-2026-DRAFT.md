@@ -58,14 +58,21 @@ www.loreweaver.ink
 - Stable release in customer hands
 - [Add: any customer feedback, usage metrics, feature updates]
 
-**Director (v0.2.1 — Alpha)**
-- **UE5 demo in active development** (Pawel) — 2 weeks from true emergent gameplay
+**Director (v0.2.1 — Alpha) — FULLY OPERATIONAL**
+- **Running standalone** with UE5 integration, end-to-end gameplay loops working
+- **UE5 demo** (Pawel) — 2 weeks from true emergent gameplay showcase
   - Dynamic dialogue, actions, plot, quests, character development
-  - First playable demonstration of Director's full capability
+- **Architecture deployed:**
+  - Local LLM server (llama.cpp + CUDA, 4096 ctx)
+  - Character Cards module (XML-based NPC definitions)
+  - Plot Module (emergent mode + async arc generation)
+  - Lore RAG (50ms retrieval for world knowledge)
+- **5-Tier Evaluation Framework** built:
+  - Tier 1: Exact match • Tier 2: Fuzzy parse • Tier 3: Valid answer
+  - Tier 4: LLM judge (96% pass) • Tier 5: Qualitative (8.58/10)
 - LoRA v2 training complete (r=32, alpha=64, 8 target modules, 5 epochs)
 - Evaluation: 74.3% overall benchmark (up from baseline)
 - EU AI Act compliance documented
-- On-device inference architecture finalized
 
 **Intent Classifier (v7 — Production-ready)**
 - **92.3% accuracy** routing player actions to correct subsystem (up from 58.9% v1)
@@ -78,10 +85,6 @@ www.loreweaver.ink
 - Tier 4 evaluation: **96% pass rate**, 88.55% intent match
 - Tier 5 qualitative: **8.58/10 overall** (tonal consistency 9.0/10)
 - Task: Transform neutral dialogue → character voice while preserving exact meaning
-
-**Lore RAG System**
-- **50ms retrieval latency** for game lore context injection
-- Enables Director to reference world knowledge in real-time
 
 **Model-Creation Pipeline**
 - Training pipeline: YAML → JSONL → LoRA fine-tune → merge → eval
