@@ -1,12 +1,16 @@
 # Investor Cold Outreach
 
-## Positioning (Core)
+**Based on research:** `research/vc-cold-outreach-messaging-2026-03-02.md`
+
+---
+
+## Core Positioning
 
 **LoreWeaver generates emergent NARRATIVE — not NPC chatter.**
 
-- We are NOT competing with NVIDIA ACE (NPC engines, voice, animation)
-- We ARE solving the narrative design bottleneck (plot, arcs, beats, consequences)
-- Compare to: dialogue trees, scripted content at scale, writing team costs
+- We are NOT competing with NVIDIA ACE (that's NPC middleware)
+- We ARE solving the narrative design bottleneck
+- Compare to: dialogue trees, content scale problems, writing team costs
 
 ---
 
@@ -14,94 +18,146 @@
 
 | Type | Subject |
 |------|---------|
-| Problem-focused | `The narrative design bottleneck — and how we solve it` |
-| Outcome-focused | `Emergent story without a 50-person writing team` |
-| Curiosity | `What if NPCs could generate plot, not just dialogue?` |
-| Direct | `LoreWeaver — narrative AI for games (EUR 400K round, Q4)` |
+| **Recommended** | `LoreWeaver — emergent narrative AI — EUR 400K` |
+| Traction-led | `Narrative AI running in UE5 — EUR 400K round` |
+| Problem-led | `BG3-level branching at indie budgets — Seed` |
+| Direct | `LoreWeaver — Seed — Raising EUR 400K` |
+
+**Rules:** <45 characters, include company name, include ask
 
 ---
 
-## Email Template
+## Email Template (195 words)
 
-**Hi [First Name],**
+```
+Subject: LoreWeaver — emergent narrative AI — EUR 400K
 
-I'm Rijk, founder of LoreWeaver. We build AI that generates emergent narrative for games — plot, story arcs, character development, the stuff that usually requires thousands of hours of writing and scripting.
+Hi [First Name],
 
-**The problem:**
-Narrative-heavy games like Baldur's Gate 3 (2M+ words, 17K endings) require massive content teams. Most studios can't afford that, so they ship dialogue trees with 3-4 branches and call it "player choice."
+I'm Rijk, founder of LoreWeaver. We generate emergent narrative for games — plot, arcs, consequences — the stuff that usually requires a 50-person writing team.
 
-**What we built:**
-- **Director** — generates plot, arcs, and beats in real-time based on player actions. NPCs pursue goals, relationships evolve, consequences cascade. Not scripted. Emergent.
-- **Architect** — production tool helping narrative designers work 10x faster on the content that *does* need human craft.
+[PERSONALIZATION: 1 sentence referencing their portfolio/thesis]
 
-**This isn't NPC middleware.** We're not making characters talk better (NVIDIA ACE does that). We're making *stories happen* — the kind that used to require a 50-person writing team or $200M budget.
+**What's working:**
+- Director (narrative engine) running end-to-end in UE5
+- 11.86ms inference, 92.3% intent accuracy, 96% character voice fidelity
+- Architect (authoring tool) in production with paying customers
+- 400+ qualified studio leads across Europe and Asia
+
+**The gap we fill:**
+NVIDIA ACE makes NPCs talk. We make stories happen — emergent quests, evolving relationships, cascading consequences. Different category entirely.
 
 **Where we are:**
-- Director running end-to-end in UE5 — emergent quests, dynamic relationships, narrative that responds to player choices
-- Architect in production with paying customers
 - Closing EUR 150K SAFE this month
+- Raising EUR 400K equity (Q4 2026)
+- UE5 demo ready in ~2 weeks
 
-**The ask:**
-20 minutes to show you what emergent narrative actually looks like in-game?
+Would 20 minutes work to see Director in action? Deck attached.
 
 Best,
-**Rijk Groenewoud**
+Rijk Groenewoud
 Founder & CEO, LoreWeaver
-[rijk@loreweaver.ink](mailto:rijk@loreweaver.ink) | [loreweaver.ink](https://loreweaver.ink)
+rijk@loreweaver.ink | loreweaver.ink
+```
 
 ---
 
-## Variations
+## Personalization Lines (Pick One)
 
-### For Gaming VCs (BITKRAFT, Konvoy, Hiro Capital, Griffin Gaming)
+**For gaming VCs (BITKRAFT, Konvoy, Hiro, Griffin):**
+> I saw your investment in [portfolio company] — we're tackling a similar content scale problem from the narrative side.
 
-Add after "The problem":
+**For AI VCs:**
+> Your thesis on vertical AI applications resonates — we're building exactly that for game narrative.
 
-> You've seen the content treadmill — studios burning budgets on dialogue that players skip. We flip that model: AI generates the branching narrative, humans craft the memorable moments.
+**For European VCs:**
+> As a Dutch company targeting the Nordic/Benelux game dev scene, your regional focus caught my attention.
 
-### For AI-Focused VCs
-
-Replace "What we built" with:
-
-> **Technical approach:**
-> - Fine-tuned 1.2B parameter model for narrative decisions (74.3% benchmark, outperforms 7B on character voice)
-> - Intent classifier at 92.3% accuracy across 96 narrative intents
-> - On-device inference at 11.86ms — no cloud dependency, fixed licensing vs per-token
-
-### For Generalist VCs
-
-Add after "Where we are":
-
-> **Business model:**
-> - Architect: SaaS (EUR 10-200/seat/month by tier)
-> - Director: Revenue share (1-5%) + premium services
-> - Target market: 3,000+ narrative-focused studios globally
+**For generalists:**
+> Your [blog post / tweet / podcast] about [topic] aligned with how we think about AI augmenting creators, not replacing them.
 
 ---
 
 ## Follow-Up Sequence
 
-**Day 3 (if no response):**
-> Hi [First Name], wanted to bump this — happy to send a 2-minute video of Director generating emergent narrative in UE5 if easier than a call.
+**Day 4 (if no response):**
+```
+Subject: Re: LoreWeaver — emergent narrative AI — EUR 400K
 
-**Day 7 (if no response):**
-> [First Name], quick update: we just [recent milestone — demo, customer, press]. Still interested in showing you what emergent narrative looks like. Let me know if timing is better next month.
+Hi [First Name],
 
-**Day 14 (final):**
-> Closing the loop on this thread. If narrative AI for games isn't a fit for [Fund Name], no worries — happy to reconnect if that changes.
+Quick follow-up — happy to send a 2-min video of Director generating emergent narrative in UE5 if that's easier than a call.
+
+Best,
+Rijk
+```
+
+**Day 10 (if no response):**
+```
+Subject: Re: LoreWeaver — emergent narrative AI — EUR 400K
+
+[First Name] — we just [hit milestone: new customer / demo ready / press mention]. 
+
+Still happy to show you what emergent narrative looks like in-game. Let me know if timing works better in [next month].
+
+Rijk
+```
+
+**Day 21 (final):**
+```
+Subject: Closing the loop — LoreWeaver
+
+[First Name], closing this thread. If narrative AI for games becomes relevant to [Fund], happy to reconnect.
+
+Rijk
+```
+
+**After 3 follow-ups:** Stop. Move on. No response = no for now.
 
 ---
 
-## Do NOT Say
+## Messaging Guide
 
-- ❌ "Like NVIDIA ACE but..." (different category entirely)
-- ❌ "AI-generated dialogue" (we generate *story*, not just talk)
-- ❌ "Replaces writers" (we augment — this triggers backlash)
-- ❌ "ChatGPT for games" (commoditized, no moat)
+### DO Say
+| Phrase | Why |
+|--------|-----|
+| "Emergent narrative" | Our unique value |
+| "Plot, arcs, consequences" | Specific, technical |
+| "Running in UE5" | Proof it works |
+| "11.86ms / 92.3% / 96%" | Credible numbers |
+| "Dialogue trees are dead" | Clear enemy |
+| "50-person writing team" | Cost comparison |
 
-## DO Say
+### DON'T Say
+| Phrase | Why |
+|--------|-----|
+| "Like NVIDIA ACE but..." | Different category |
+| "AI-generated content" | Triggers backlash |
+| "Revolutionary / disruptive" | Empty buzzwords |
+| "Replaces writers" | Industry-hostile |
+| "ChatGPT for games" | Commoditized, no moat |
+| "Huge market opportunity" | Use specific TAM instead |
 
-- ✅ "Emergent narrative" (our unique value)
-- ✅ "Story arcs, beats, consequences" (specific, technical)
-- ✅ "Dialogue trees are dead" (clear enemy)
-- ✅ "BG3-level branching at indie budgets" (aspirational, concrete)
+---
+
+## Checklist Before Sending
+
+- [ ] Subject line <45 characters
+- [ ] Email <250 words
+- [ ] 1 personalization line (specific to this VC)
+- [ ] 3-5 traction bullets with numbers
+- [ ] Clear differentiation from ACE/Inworld
+- [ ] Single ask (20 min call)
+- [ ] Deck attached (full, not teaser)
+- [ ] Calendly or "I'll send times" — make yes easy
+
+---
+
+## Tracking
+
+Use DocSend for deck to track opens. Log all outreach in CRM with:
+- Date sent
+- Subject line used
+- Personalization used
+- Follow-up dates
+- Response (if any)
