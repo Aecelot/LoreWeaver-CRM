@@ -9,7 +9,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { marked } from 'marked';
-import { dirname, basename, join } from 'path';
+import { dirname, basename, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -51,27 +51,33 @@ const htmlTemplate = (title, content, preheader = '') => `
     /* Reset */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
+    html {
+      background: ${BRAND.primaryBg};
+    }
+    
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: ${BRAND.primaryBg};
       color: ${BRAND.textPrimary};
-      line-height: 1.7;
+      line-height: 1.6;
+      font-size: 14px;
       -webkit-font-smoothing: antialiased;
     }
     
     /* Email wrapper */
     .email-wrapper {
-      max-width: 680px;
+      max-width: 600px;
       margin: 0 auto;
-      padding: 40px 24px;
+      padding: 20px 16px;
+      background: ${BRAND.primaryBg};
     }
     
     /* Header */
     .header {
       text-align: center;
-      padding-bottom: 40px;
+      padding-bottom: 16px;
       border-bottom: 1px solid ${BRAND.borderColor};
-      margin-bottom: 40px;
+      margin-bottom: 16px;
     }
     
     .logo {
@@ -93,10 +99,10 @@ const htmlTemplate = (title, content, preheader = '') => `
     }
     
     .content h1 {
-      font-size: 2.5rem;
+      font-size: 1.5rem;
       font-weight: 800;
       color: ${BRAND.textPrimary};
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       letter-spacing: -0.03em;
       line-height: 1.2;
     }
@@ -106,27 +112,37 @@ const htmlTemplate = (title, content, preheader = '') => `
     }
     
     .content h2 {
-      font-size: 1.5rem;
+      font-size: 1rem;
       font-weight: 700;
       color: ${BRAND.textPrimary};
-      margin-top: 48px;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
       border-bottom: 2px solid ${BRAND.accentOrange};
       display: inline-block;
     }
     
     .content h3 {
-      font-size: 1.2rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: ${BRAND.textPrimary};
-      margin-top: 32px;
-      margin-bottom: 12px;
+      margin-top: 12px;
+      margin-bottom: 4px;
     }
     
     .content p {
-      margin-bottom: 16px;
+      margin-bottom: 8px;
       color: ${BRAND.textSecondary};
+      font-size: 0.85rem;
+    }
+    
+    /* Images */
+    .content img {
+      max-width: 70%;
+      height: auto;
+      border-radius: 6px;
+      margin: 12px 0;
+      display: block;
     }
     
     .content strong {
@@ -152,13 +168,14 @@ const htmlTemplate = (title, content, preheader = '') => `
     
     /* Lists */
     .content ul, .content ol {
-      margin: 16px 0;
-      padding-left: 24px;
+      margin: 10px 0;
+      padding-left: 20px;
     }
     
     .content li {
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       color: ${BRAND.textSecondary};
+      font-size: 0.9rem;
     }
     
     .content li strong {
@@ -168,10 +185,11 @@ const htmlTemplate = (title, content, preheader = '') => `
     /* Blockquotes */
     .content blockquote {
       border-left: 3px solid ${BRAND.accentOrange};
-      padding-left: 20px;
-      margin: 24px 0;
+      padding-left: 16px;
+      margin: 14px 0;
       color: ${BRAND.textTertiary};
       font-style: italic;
+      font-size: 0.9rem;
     }
     
     /* Code */
@@ -203,8 +221,8 @@ const htmlTemplate = (title, content, preheader = '') => `
     .content table {
       width: 100%;
       border-collapse: collapse;
-      margin: 24px 0;
-      font-size: 0.95rem;
+      margin: 14px 0;
+      font-size: 0.8rem;
     }
     
     .content th {
@@ -212,12 +230,12 @@ const htmlTemplate = (title, content, preheader = '') => `
       color: ${BRAND.textPrimary};
       font-weight: 600;
       text-align: left;
-      padding: 12px 16px;
+      padding: 8px 10px;
       border-bottom: 2px solid ${BRAND.accentOrange};
     }
     
     .content td {
-      padding: 12px 16px;
+      padding: 6px 10px;
       border-bottom: 1px solid ${BRAND.borderColor};
       color: ${BRAND.textSecondary};
     }
@@ -231,7 +249,7 @@ const htmlTemplate = (title, content, preheader = '') => `
       border: none;
       height: 1px;
       background: ${BRAND.borderColor};
-      margin: 40px 0;
+      margin: 16px 0;
     }
     
     /* CTA Buttons */
@@ -302,12 +320,12 @@ const htmlTemplate = (title, content, preheader = '') => `
     
     /* Footer */
     .footer {
-      margin-top: 60px;
-      padding-top: 40px;
+      margin-top: 20px;
+      padding-top: 16px;
       border-top: 1px solid ${BRAND.borderColor};
       text-align: center;
       color: ${BRAND.textMuted};
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
     
     .footer a {
@@ -414,7 +432,21 @@ marked.use({ renderer });
 // Main build function
 function buildNewsletter(inputPath) {
   // Read markdown
-  const markdown = readFileSync(inputPath, 'utf-8');
+  let markdown = readFileSync(inputPath, 'utf-8');
+  
+  // Get the directory of the input file for resolving relative paths
+  const inputDir = resolve(dirname(inputPath));
+  
+  // Convert relative image paths to absolute file:// URLs
+  markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+    // Skip if already absolute URL
+    if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('file://')) {
+      return match;
+    }
+    // Convert to absolute file:// URL
+    const absolutePath = resolve(inputDir, src).replace(/\\/g, '/');
+    return `![${alt}](file:///${absolutePath})`;
+  });
   
   // Extract title from first h1
   const titleMatch = markdown.match(/^#\s+(.+)$/m);
