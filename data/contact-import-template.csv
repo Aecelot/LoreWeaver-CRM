@@ -1,0 +1,2 @@
+name,email,company,role,phone,linkedin,contact_type,source,notes
+"Example Person","example@company.com","Example Company","CEO","","/in/example","partner","gmail-import","Met at GDC 2025"
