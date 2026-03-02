@@ -59,6 +59,9 @@ www.loreweaver.ink
 - [Add: any customer feedback, usage metrics, feature updates]
 
 **Director (v0.2.1 — Alpha)**
+- **UE5 demo in active development** (Pawel) — 2 weeks from true emergent gameplay
+  - Dynamic dialogue, actions, plot, quests, character development
+  - First playable demonstration of Director's full capability
 - LoRA v2 training complete (r=32, alpha=64, 8 target modules, 5 epochs)
 - Evaluation: 74.3% overall benchmark (up from baseline)
 - EU AI Act compliance documented
@@ -88,7 +91,8 @@ www.loreweaver.ink
 - Hawkswell Studios LOI signed
 
 **Team**
-- Kiomi ten Damme — Narrative Design Intern (joined Q1)
+- Kiomi ten Damme — Narrative Design Intern
+- Pawel — UE5 Integration / Director Demo Development
 - [Add: any other team updates]
 
 ---
@@ -104,8 +108,8 @@ www.loreweaver.ink
 - [Add: current burn rate and runway months]
 
 **Q2 2026 Priorities**
-1. Architect customer expansion
-2. Director demo at industry events
+1. **Director UE5 demo launch** (~mid-March) — first public demonstration of emergent gameplay
+2. Architect customer expansion
 3. B'Game presentation (March 19)
 4. GDC networking / follow-up
 5. Close EUR 150K SAFE tranche
