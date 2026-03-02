@@ -73,6 +73,16 @@ www.loreweaver.ink
 - Runs on CPU with <50ms latency — no GPU required for routing
 - 8,109 training examples across 8 epochs
 
+**Dialogue Style Transfer (Paraphrasing Fine-Tuning)**
+- **20 unique character voices** trained (Brix, Morvak, K'Bari, Brother Elias, etc.)
+- Tier 4 evaluation: **96% pass rate**, 88.55% intent match
+- Tier 5 qualitative: **8.58/10 overall** (tonal consistency 9.0/10)
+- Task: Transform neutral dialogue → character voice while preserving exact meaning
+
+**Lore RAG System**
+- **50ms retrieval latency** for game lore context injection
+- Enables Director to reference world knowledge in real-time
+
 **Model-Creation Pipeline**
 - Training pipeline: YAML → JSONL → LoRA fine-tune → merge → eval
 - 3,500 training examples (70% SFT / 30% DPO)
