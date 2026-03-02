@@ -98,3 +98,16 @@ export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
 }
+
+/**
+ * Calculate priority based on fit score
+ * @param fitScore - Score from 0-10
+ * @returns Priority level: 'high' | 'medium' | 'low' | 'none'
+ */
+export function calculatePriorityFromFitScore(fitScore: number | undefined): 'high' | 'medium' | 'low' | 'none' {
+  if (fitScore === undefined || fitScore === null) return 'none';
+  if (fitScore >= 7) return 'high';
+  if (fitScore >= 4) return 'medium';
+  if (fitScore >= 1) return 'low';
+  return 'none';
+}

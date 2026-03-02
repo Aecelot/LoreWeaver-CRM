@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(winget install:*)",
+      "Bash(cmd /c \"C:\\\\Users\\\\rijkg\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe C:\\\\Users\\\\rijkg\\\\AppData\\\\Local\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud config set project loreweaver-crm\")",
+      "Bash(cmd /c \"dir C:\\\\Users\\\\rijkg\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\ /b 2>nul\")",
+      "Bash(powershell.exe -Command:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(gcloud functions describe:*)",
+      "Bash(gcloud --version:*)",
+      "Bash(CLOUDSDK_PYTHON=/c/Python314/python.exe /c/Users/rijkg/AppData/Local/Google/Cloud\\\\ SDK/google-cloud-sdk/bin/gcloud.cmd config set:*)",
+      "Bash(gcloud projects get-iam-policy:*)",
+      "Bash(firebase login:list:*)",
+      "Bash(set FIREBASE_TOKEN=)"
+    ]
+  }
+}

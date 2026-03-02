@@ -1,12 +1,62 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useGmail } from '@/hooks/useGmail';
-import { Mail, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Mail, CheckCircle, XCircle, Loader2, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { db } from '@/lib/firebase';
+import { doc, setDoc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { toast } from 'sonner';
 
 export const GmailConnection: React.FC = () => {
   const { status, loading, connecting, connect, disconnect } = useGmail();
+  const [sendingTest, setSendingTest] = useState(false);
+
+  const sendTestEmail = async () => {
+    if (!status.email) return;
+
+    setSendingTest(true);
+    try {
+      const requestId = `${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+      const requestRef = doc(db, 'testEmailRequests', requestId);
+
+      // Write the request
+      await setDoc(requestRef, {
+        to: status.email,
+        subject: 'Test Email from LoreWeaver CRM',
+        body: '<p>This is a test email to verify your Gmail connection is working correctly.</p><p>If you received this, email sequences are ready to use!</p>',
+        createdAt: Timestamp.now(),
+        status: 'pending',
+      });
+
+      // Listen for result
+      const unsubscribe = onSnapshot(requestRef, (snapshot) => {
+        const data = snapshot.data();
+        if (data?.status === 'completed') {
+          unsubscribe();
+          toast.success('Test email sent successfully! Check your inbox.');
+          setSendingTest(false);
+        } else if (data?.status === 'error') {
+          unsubscribe();
+          toast.error(data.error || 'Failed to send test email');
+          setSendingTest(false);
+        }
+      });
+
+      // Timeout after 30 seconds
+      setTimeout(() => {
+        unsubscribe();
+        if (sendingTest) {
+          toast.error('Test email timed out');
+          setSendingTest(false);
+        }
+      }, 30000);
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      toast.error('Failed to send test email');
+      setSendingTest(false);
+    }
+  };
 
   return (
     <Card>
@@ -47,9 +97,24 @@ export const GmailConnection: React.FC = () => {
                 </div>
               )}
             </div>
-            <Button variant="outline" onClick={disconnect}>
-              Disconnect Gmail
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={sendTestEmail} disabled={sendingTest}>
+                {sendingTest ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Test Email
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" onClick={disconnect}>
+                Disconnect Gmail
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

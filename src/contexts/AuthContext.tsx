@@ -69,9 +69,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signIn = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      toast.error('Failed to sign in. Please try again.');
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('Sign-in successful:', result.user.email);
+    } catch (error: unknown) {
+      const firebaseError = error as { code?: string; message?: string; customData?: { email?: string } };
+      console.error('Sign-in error:', error);
+      console.error('Error code:', firebaseError.code);
+      console.error('Error message:', firebaseError.message);
+      console.error('Full error object:', JSON.stringify(error, null, 2));
+      toast.error(`Sign-in failed: ${firebaseError.code || firebaseError.message}`);
       throw error;
     }
   };

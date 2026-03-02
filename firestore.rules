@@ -77,5 +77,44 @@ service cloud.firestore {
       allow update: if isAuthenticated();
       allow delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
     }
+
+    // Config collection (Gmail settings, etc.)
+    match /config/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Gmail auth requests - for triggering OAuth flow via Firestore
+    match /gmailAuthRequests/{requestId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Gmail code exchange - for exchanging OAuth code via Firestore trigger
+    match /gmailCodeExchange/{exchangeId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Email sequences
+    match /sequences/{sequenceId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isAuthenticated();
+    }
+
+    // Lead sequence status
+    match /leadSequences/{statusId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    // Test email requests - for sending test emails via Firestore trigger
+    match /testEmailRequests/{requestId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Contact import requests - for importing Google contacts via Firestore trigger
+    match /contactImportRequests/{requestId} {
+      allow read, write: if isAuthenticated();
+    }
   }
 }

@@ -93,16 +93,17 @@ export const LeadStudioFields: React.FC<LeadStudioFieldsProps> = ({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="studioFitScore">Fit Score (0-100)</Label>
+          <Label htmlFor="studioFitScore">Fit Score (0-10)</Label>
           <Input
             id="studioFitScore"
             type="number"
             min={0}
-            max={100}
+            max={10}
             value={studio.fitScore ?? ''}
             onChange={(e) => handleStudioChange('fitScore', parseInt(e.target.value) || 0)}
-            placeholder="75"
+            placeholder="7"
           />
+          <p className="text-xs text-muted-foreground">Priority auto-calculates: 7+ high, 4-6 medium, 1-3 low</p>
         </div>
       </div>
 

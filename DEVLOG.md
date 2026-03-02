@@ -414,3 +414,50 @@ initializeDefaultPipelines: vi.fn().mockResolvedValue(['id1', 'id2'])
 - When setting a contact as primary, other contacts for that lead are automatically unset
 - Deleting a contact removes all its lead links via batch operation
 - Existing lead.contact field preserved for backwards compatibility
+
+---
+
+## Phase 12: Lead Qualification Workflow
+
+**Status**: Complete
+
+**Date**: March 2, 2026
+
+### Completed
+- **Prospect/Lead Category**: Added LeadCategory type ('prospect' | 'lead') to distinguish unqualified prospects from qualified leads
+- **Category Filter**: Added category filter dropdown to leads list (All Categories, Prospects, Leads)
+- **Category Column**: Added category column to leads table with clickable badge for quick qualification
+- **Qualify Button**: Added "Qualify" button to lead detail header for prospects
+- **Default Prospect**: New leads default to 'prospect' category
+- **Activity Tracking**: Category changes are logged in activity timeline
+- **Auto-Priority Calculation**: Priority auto-calculates from fit score (7+ high, 4-6 medium, 1-3 low, 0 none)
+- **Manual Override**: Users can manually override auto-calculated priority
+
+### Key Files
+- `src/types/lead.ts` - Added LeadCategory type and category field
+- `src/contexts/ConfigContext.tsx` - Added categories config array
+- `src/components/leads/LeadsTable.tsx` - Category column with click-to-qualify
+- `src/components/leads/LeadsFilters.tsx` - Category filter dropdown
+- `src/components/leads/LeadHeader.tsx` - Qualify button and category badge
+- `src/components/forms/LeadForm.tsx` - Default to prospect, auto-priority calculation
+- `src/components/forms/LeadBasicFields.tsx` - Category selector field
+- `src/components/forms/LeadStudioFields.tsx` - Fit score helper text
+- `src/lib/utils.ts` - calculatePriorityFromFitScore utility
+- `src/pages/Leads.tsx` - handleQualify function
+- `src/pages/LeadDetail.tsx` - Qualify handler
+
+### Badge Colors
+- **Prospect**: orange (warming up, needs qualification)
+- **Lead**: teal (qualified, ready for pipeline progression)
+
+### Priority Auto-Calculation Logic
+- Fit Score 7-10 → High priority
+- Fit Score 4-6 → Medium priority
+- Fit Score 1-3 → Low priority
+- Fit Score 0 or undefined → None
+
+### Technical Notes
+- Category field is optional, defaults to 'prospect' for backwards compatibility
+- Priority auto-calculates when fit score changes in the form
+- Manual priority change disables auto-calculation for that form session
+- Fit score range normalized to 0-10 (form label and max updated)

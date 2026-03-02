@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import {
   validateUrl,
   validateLinkedInUrl,
 } from '@/lib/validators';
+import { calculatePriorityFromFitScore } from '@/lib/utils';
 import type { Lead, LeadContact, StudioInfo, InvestorInfo } from '@/types/lead';
 
 interface LeadFormProps {
@@ -39,7 +40,15 @@ export const LeadForm: React.FC<LeadFormProps> = ({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Track if user manually changed priority (to allow override of auto-calculation)
+  const priorityManuallySet = useRef(false);
+
   const handleChange = useCallback((field: keyof Lead, value: unknown) => {
+    // Track manual priority changes
+    if (field === 'priority') {
+      priorityManuallySet.current = true;
+    }
+
     setValues((prev) => ({ ...prev, [field]: value }));
     // Clear error when field is modified
     setErrors((prev) => {
@@ -62,7 +71,19 @@ export const LeadForm: React.FC<LeadFormProps> = ({
   }, []);
 
   const handleStudioChange = useCallback((_field: keyof Lead, value: Partial<StudioInfo>) => {
-    setValues((prev) => ({ ...prev, studio: { ...prev.studio, ...value } as StudioInfo }));
+    setValues((prev) => {
+      const newValues = { ...prev, studio: { ...prev.studio, ...value } as StudioInfo };
+
+      // Auto-calculate priority from fit score if not manually set
+      if ('fitScore' in value && !priorityManuallySet.current) {
+        const fitScore = value.fitScore;
+        // Normalize if stored as 0-100 (divide by 10 for calculation)
+        const normalizedScore = fitScore !== undefined && fitScore > 10 ? fitScore / 10 : fitScore;
+        newValues.priority = calculatePriorityFromFitScore(normalizedScore);
+      }
+
+      return newValues;
+    });
   }, []);
 
   const handleInvestorChange = useCallback((_field: keyof Lead, value: Partial<InvestorInfo>) => {
