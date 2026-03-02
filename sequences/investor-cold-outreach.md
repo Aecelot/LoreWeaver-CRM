@@ -18,10 +18,10 @@
 
 | Type | Subject |
 |------|---------|
-| **Recommended** | `LoreWeaver — emergent narrative AI — EUR 400K` |
-| Traction-led | `Narrative AI running in UE5 — EUR 400K round` |
-| Problem-led | `BG3-level branching at indie budgets — Seed` |
-| Direct | `LoreWeaver — Seed — Raising EUR 400K` |
+| **Recommended** | `LoreWeaver — emergent narrative AI — EUR 150K` |
+| Traction-led | `Narrative AI running in UE5 — raising EUR 150K` |
+| Problem-led | `BG3-level branching at indie budgets — Angel` |
+| Direct | `LoreWeaver — Angel — Raising EUR 150K` |
 
 **Rules:** <45 characters, include company name, include ask
 
@@ -30,7 +30,7 @@
 ## Email Template (195 words)
 
 ```
-Subject: LoreWeaver — emergent narrative AI — EUR 400K
+Subject: LoreWeaver — emergent narrative AI — EUR 150K
 
 Hi [First Name],
 
@@ -48,9 +48,10 @@ I'm Rijk, founder of LoreWeaver. We generate emergent narrative for games — pl
 NVIDIA ACE makes NPCs talk. We make stories happen — emergent quests, evolving relationships, cascading consequences. Different category entirely.
 
 **Where we are:**
-- Closing EUR 150K SAFE this month
-- Raising EUR 400K equity (Q4 2026)
-- UE5 demo ready in ~2 weeks
+- UE5 Director demo ready
+- Architect in beta testing, starting paid pilots
+- Closed EUR 70K SAFE (friends & family)
+- Now raising EUR 150K angel round
 
 Would 20 minutes work to see Director in action? Deck attached.
 
@@ -82,7 +83,7 @@ rijk@loreweaver.ink | loreweaver.ink
 
 **Day 4 (if no response):**
 ```
-Subject: Re: LoreWeaver — emergent narrative AI — EUR 400K
+Subject: Re: LoreWeaver — emergent narrative AI — EUR 150K
 
 Hi [First Name],
 
@@ -94,7 +95,7 @@ Rijk
 
 **Day 10 (if no response):**
 ```
-Subject: Re: LoreWeaver — emergent narrative AI — EUR 400K
+Subject: Re: LoreWeaver — emergent narrative AI — EUR 150K
 
 [First Name] — we just [hit milestone: new customer / demo ready / press mention]. 
 
