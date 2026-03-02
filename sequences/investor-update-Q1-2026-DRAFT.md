@@ -66,7 +66,7 @@ www.loreweaver.ink
   - Local LLM server (llama.cpp + CUDA, 4096 ctx)
   - Character Cards module (XML-based NPC definitions)
   - Plot Module (emergent mode + async arc generation)
-  - Lore RAG (50ms retrieval for world knowledge)
+  - Lore RAG (P50=58ms, P95=64ms — hybrid BM25+FAISS+reranking)
 - **5-Tier Evaluation Framework** built:
   - Tier 1: Exact match • Tier 2: Fuzzy parse • Tier 3: Valid answer
   - Tier 4: LLM judge (96% pass) • Tier 5: Qualitative (8.58/10)
