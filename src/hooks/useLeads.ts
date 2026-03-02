@@ -9,6 +9,7 @@ export const useLeads = (filters?: LeadFilters) => {
 
   // Memoize filter values to prevent unnecessary re-renders
   const filterType = filters?.type;
+  const filterCategory = filters?.category;
   const filterStatus = filters?.status;
   const filterPriority = filters?.priority;
   const filterOwner = filters?.owner;
@@ -16,11 +17,12 @@ export const useLeads = (filters?: LeadFilters) => {
 
   const stableFilters = useMemo(() => ({
     type: filterType,
+    category: filterCategory,
     status: filterStatus,
     priority: filterPriority,
     owner: filterOwner,
     search: filterSearch,
-  }), [filterType, filterStatus, filterPriority, filterOwner, filterSearch]);
+  }), [filterType, filterCategory, filterStatus, filterPriority, filterOwner, filterSearch]);
 
   useEffect(() => {
     setLoading(true);

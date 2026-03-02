@@ -89,6 +89,15 @@ export const Leads: React.FC = () => {
     }
   };
 
+  const handleQualify = async (id: string) => {
+    try {
+      await editLead(id, { category: 'lead' });
+      toast.success('Lead qualified');
+    } catch {
+      toast.error('Failed to qualify lead');
+    }
+  };
+
   // Get selected lead objects for bulk actions
   const selectedLeads = useMemo(() => {
     return leads.filter((lead) => selectedIds.includes(lead.id));
@@ -129,6 +138,7 @@ export const Leads: React.FC = () => {
         leads={sortedLeads}
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
+        onQualify={handleQualify}
         loading={loading}
       />
 

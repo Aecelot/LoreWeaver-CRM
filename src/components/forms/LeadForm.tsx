@@ -33,6 +33,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
     type: 'studio',
     status: 'new',
     priority: 'none',
+    category: 'prospect',
     contact: { name: '', email: '', role: '', phone: '', linkedin: '' },
     ...initialValues,
   });

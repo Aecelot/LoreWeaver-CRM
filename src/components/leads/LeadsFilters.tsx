@@ -38,6 +38,12 @@ const statusOptions = [
   { value: 'archived', label: 'Archived' },
 ];
 
+const categoryOptions = [
+  { value: 'all', label: 'All Categories' },
+  { value: 'prospect', label: 'Prospects' },
+  { value: 'lead', label: 'Leads' },
+];
+
 export const LeadsFilters: React.FC<LeadsFiltersProps> = ({
   filters,
   onFiltersChange,
@@ -55,6 +61,10 @@ export const LeadsFilters: React.FC<LeadsFiltersProps> = ({
     onFiltersChange({ ...filters, status: value === 'all' ? undefined : value });
   };
 
+  const handleCategoryChange = (value: string) => {
+    onFiltersChange({ ...filters, category: value === 'all' ? undefined : value as 'prospect' | 'lead' });
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFiltersChange({ ...filters, search: e.target.value || undefined });
   };
@@ -63,7 +73,7 @@ export const LeadsFilters: React.FC<LeadsFiltersProps> = ({
     onFiltersChange({});
   };
 
-  const hasActiveFilters = filters.type || filters.priority || filters.status || filters.search;
+  const hasActiveFilters = filters.type || filters.category || filters.priority || filters.status || filters.search;
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -83,6 +93,19 @@ export const LeadsFilters: React.FC<LeadsFiltersProps> = ({
         </SelectTrigger>
         <SelectContent>
           {typeOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={filters.category || 'all'} onValueChange={handleCategoryChange}>
+        <SelectTrigger className="w-40">
+          <SelectValue placeholder="All Categories" />
+        </SelectTrigger>
+        <SelectContent>
+          {categoryOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>

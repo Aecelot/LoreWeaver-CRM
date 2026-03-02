@@ -8,6 +8,13 @@ export interface NoteStatus {
   color: string;
 }
 
+// Lead category config (prospect/lead)
+export interface LeadCategoryConfig {
+  value: string;
+  label: string;
+  color: string;
+}
+
 // Configuration interface for the CRM
 export interface ConfigContextValue {
   // Lead types
@@ -21,6 +28,9 @@ export interface ConfigContextValue {
 
   // Note statuses (temperature)
   noteStatuses: NoteStatus[];
+
+  // Lead categories (prospect/lead)
+  categories: LeadCategoryConfig[];
 
   // Task types
   taskTypes: string[];
@@ -55,6 +65,11 @@ const defaultNoteStatuses: NoteStatus[] = [
   { value: 'hot', label: 'Hot', color: 'orange' },
 ];
 
+const defaultCategories: LeadCategoryConfig[] = [
+  { value: 'prospect', label: 'Prospect', color: 'orange' },
+  { value: 'lead', label: 'Lead', color: 'teal' },
+];
+
 const defaultTaskTypes = [
   'Email',
   'Call',
@@ -71,6 +86,7 @@ const defaultConfig: ConfigContextValue = {
   priorities: defaultPriorities,
   statuses: defaultStatuses,
   noteStatuses: defaultNoteStatuses,
+  categories: defaultCategories,
   taskTypes: defaultTaskTypes,
   title: 'LoreWeaver CRM',
 };
@@ -116,6 +132,7 @@ export {
   defaultPriorities,
   defaultStatuses,
   defaultNoteStatuses,
+  defaultCategories,
   defaultTaskTypes,
   defaultConfig,
 };

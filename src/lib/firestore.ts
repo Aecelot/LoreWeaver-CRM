@@ -83,6 +83,9 @@ export const getLeadsRealtime = (
       if (filters.owner) {
         leads = leads.filter(lead => lead.owner === filters.owner);
       }
+      if (filters.category) {
+        leads = leads.filter(lead => (lead.category || 'prospect') === filters.category);
+      }
     }
 
     // Sort by createdAt client-side

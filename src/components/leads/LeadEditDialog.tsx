@@ -23,7 +23,7 @@ interface LeadEditDialogProps {
 // Helper to detect changes between old and new values
 const detectChanges = (oldLead: Lead, newValues: Partial<Lead>): ActivityChange[] => {
   const changes: ActivityChange[] = [];
-  const fieldsToTrack = ['name', 'type', 'status', 'priority', 'website', 'location', 'country'] as const;
+  const fieldsToTrack = ['name', 'type', 'category', 'status', 'priority', 'website', 'location', 'country'] as const;
 
   for (const field of fieldsToTrack) {
     if (newValues[field] !== undefined && newValues[field] !== oldLead[field]) {

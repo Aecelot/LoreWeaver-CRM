@@ -88,7 +88,26 @@ export const LeadBasicFields: React.FC<LeadBasicFieldsProps> = ({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="space-y-2">
+          <Label htmlFor="category">Category</Label>
+          <Select
+            value={values.category || 'prospect'}
+            onValueChange={(value) => onChange('category', value)}
+          >
+            <SelectTrigger id="category">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {config.categories.map((cat) => (
+                <SelectItem key={cat.value} value={cat.value}>
+                  {cat.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
           <Select

@@ -2,13 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Trash2, ExternalLink, Building, DollarSign } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, ExternalLink, Building, DollarSign, ArrowUpCircle } from 'lucide-react';
 import type { Lead } from '@/types/lead';
 
 interface LeadHeaderProps {
   lead: Lead;
   onEdit: () => void;
   onDelete: () => void;
+  onQualify?: () => void;
 }
 
 const priorityColors: Record<string, string> = {
@@ -23,7 +24,12 @@ const typeColors: Record<string, string> = {
   investor: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
 };
 
-export const LeadHeader: React.FC<LeadHeaderProps> = ({ lead, onEdit, onDelete }) => {
+const categoryColors: Record<string, string> = {
+  prospect: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  lead: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
+};
+
+export const LeadHeader: React.FC<LeadHeaderProps> = ({ lead, onEdit, onDelete, onQualify }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -47,6 +53,9 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({ lead, onEdit, onDelete }
                 <Badge variant="secondary" className={typeColors[lead.type]}>
                   {lead.type}
                 </Badge>
+                <Badge variant="secondary" className={categoryColors[lead.category || 'prospect']}>
+                  {lead.category === 'lead' ? 'Qualified Lead' : 'Prospect'}
+                </Badge>
                 <Badge variant="secondary" className={priorityColors[lead.priority]}>
                   {lead.priority} priority
                 </Badge>
@@ -58,6 +67,12 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({ lead, onEdit, onDelete }
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {lead.category !== 'lead' && onQualify && (
+            <Button variant="outline" size="sm" onClick={onQualify}>
+              <ArrowUpCircle className="h-4 w-4 mr-2" />
+              Qualify
+            </Button>
+          )}
           {lead.website && (
             <Button variant="outline" size="sm" asChild>
               <a href={lead.website} target="_blank" rel="noopener noreferrer">

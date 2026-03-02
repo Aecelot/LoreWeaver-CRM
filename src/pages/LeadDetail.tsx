@@ -31,7 +31,7 @@ import {
 export const LeadDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { leads, loading, removeLead } = useLeads();
+  const { leads, loading, editLead, removeLead } = useLeads();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -52,6 +52,16 @@ export const LeadDetail: React.FC = () => {
     } catch {
       toast.error('Failed to delete lead');
       setIsDeleting(false);
+    }
+  };
+
+  const handleQualify = async () => {
+    if (!id) return;
+    try {
+      await editLead(id, { category: 'lead' });
+      toast.success('Lead qualified');
+    } catch {
+      toast.error('Failed to qualify lead');
     }
   };
 
@@ -100,6 +110,7 @@ export const LeadDetail: React.FC = () => {
         lead={lead}
         onEdit={handleEdit}
         onDelete={() => setShowDeleteDialog(true)}
+        onQualify={lead.category !== 'lead' ? handleQualify : undefined}
       />
 
       <div className="grid gap-6 md:grid-cols-2">

@@ -23,6 +23,7 @@ interface LeadsTableProps {
   leads: Lead[];
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
+  onQualify?: (id: string) => void;
   loading?: boolean;
 }
 
@@ -38,10 +39,16 @@ const typeColors: Record<string, string> = {
   investor: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
 };
 
+const categoryColors: Record<string, string> = {
+  prospect: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  lead: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
+};
+
 export const LeadsTable: React.FC<LeadsTableProps> = ({
   leads,
   selectedIds,
   onSelectionChange,
+  onQualify,
   loading,
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -82,6 +89,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               <TableHead className="w-12"></TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Fit</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Priority</TableHead>
@@ -94,6 +102,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               <TableRow key={i}>
                 <TableCell><div className="h-4 w-4 bg-muted animate-pulse rounded" /></TableCell>
                 <TableCell><div className="h-4 w-32 bg-muted animate-pulse rounded" /></TableCell>
+                <TableCell><div className="h-4 w-16 bg-muted animate-pulse rounded" /></TableCell>
                 <TableCell><div className="h-4 w-16 bg-muted animate-pulse rounded" /></TableCell>
                 <TableCell><div className="h-4 w-20 bg-muted animate-pulse rounded" /></TableCell>
                 <TableCell><div className="h-4 w-24 bg-muted animate-pulse rounded" /></TableCell>
@@ -171,6 +180,22 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           </Badge>
         </TableCell>
         <TableCell>
+          <Badge
+            variant="secondary"
+            className={`${categoryColors[lead.category || 'prospect']} ${lead.category !== 'lead' && onQualify ? 'cursor-pointer hover:opacity-80' : ''}`}
+            onClick={(e) => {
+              if (lead.category !== 'lead' && onQualify) {
+                e.stopPropagation();
+                e.preventDefault();
+                onQualify(lead.id);
+              }
+            }}
+            title={lead.category !== 'lead' ? 'Click to qualify as lead' : undefined}
+          >
+            {lead.category === 'lead' ? 'Lead' : 'Prospect'}
+          </Badge>
+        </TableCell>
+        <TableCell>
           {lead.studio?.fitScore !== undefined ? (
             <span className={`font-medium ${lead.studio.fitScore >= 7 ? 'text-green-600' : lead.studio.fitScore >= 4 ? 'text-yellow-600' : 'text-red-600'}`}>
               {lead.studio.fitScore}/10
@@ -218,6 +243,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Fit</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Priority</TableHead>
@@ -260,6 +286,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             </TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Type</TableHead>
+            <TableHead>Category</TableHead>
             <TableHead>Fit</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Priority</TableHead>

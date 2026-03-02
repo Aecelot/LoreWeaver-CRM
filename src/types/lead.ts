@@ -26,6 +26,7 @@ export interface InvestorInfo {
 
 export type LeadSource = 'website' | 'referral' | 'linkedin' | 'conference' | 'cold_outreach' | 'inbound' | 'other';
 export type CompanySize = 'startup' | 'small' | 'medium' | 'large' | 'enterprise';
+export type LeadCategory = 'prospect' | 'lead';
 
 export interface Lead {
   id: string;
@@ -33,6 +34,7 @@ export interface Lead {
   name: string;
   status: string;
   priority: 'high' | 'medium' | 'low' | 'none';
+  category?: LeadCategory;
   owner: string;
   contact: LeadContact;
   website: string;
@@ -66,6 +68,7 @@ export interface LeadFormData extends Omit<Lead, 'id' | 'createdAt' | 'updatedAt
 
 export interface LeadFilters {
   type?: 'studio' | 'investor';
+  category?: LeadCategory;
   status?: string;
   priority?: 'high' | 'medium' | 'low' | 'none';
   owner?: string;
