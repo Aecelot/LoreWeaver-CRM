@@ -67,6 +67,12 @@ www.loreweaver.ink
 - EU AI Act compliance documented
 - On-device inference architecture finalized
 
+**Intent Classifier (v7 — Production-ready)**
+- **92.3% accuracy** routing player actions to correct subsystem (up from 58.9% v1)
+- 96 intent classes (UPDATE_STATE, GENERATE_DIALOGUE, RESOLVE_MECHANICS, etc.)
+- Runs on CPU with <50ms latency — no GPU required for routing
+- 8,109 training examples across 8 epochs
+
 **Model-Creation Pipeline**
 - Training pipeline: YAML → JSONL → LoRA fine-tune → merge → eval
 - 3,500 training examples (70% SFT / 30% DPO)
