@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useActivities } from '@/hooks/useActivities';
 import type { Activity, ActivityType } from '@/types/activity';
@@ -12,10 +13,17 @@ import {
   MessageSquare,
   MessageSquareX,
   History,
+  Phone,
+  Mail,
+  Calendar,
+  Monitor,
+  Linkedin,
+  CircleDot,
 } from 'lucide-react';
 
 interface ActivityTimelineProps {
   leadId: string;
+  onLogActivity?: () => void;
 }
 
 // Map activity types to icons
@@ -36,6 +44,19 @@ const ActivityIcon: React.FC<{ type: ActivityType }> = ({ type }) => {
       return <MessageSquare className={iconClass} />;
     case 'note_deleted':
       return <MessageSquareX className={iconClass} />;
+    // Manual activity types
+    case 'call':
+      return <Phone className={iconClass} />;
+    case 'email':
+      return <Mail className={iconClass} />;
+    case 'meeting':
+      return <Calendar className={iconClass} />;
+    case 'demo':
+      return <Monitor className={iconClass} />;
+    case 'linkedin_message':
+      return <Linkedin className={iconClass} />;
+    case 'other':
+      return <CircleDot className={iconClass} />;
     default:
       return <History className={iconClass} />;
   }
@@ -58,6 +79,19 @@ const getActivityColor = (type: ActivityType): string => {
       return 'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400';
     case 'note_deleted':
       return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+    // Manual activity types - use teal/cyan for user interactions
+    case 'call':
+      return 'bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-400';
+    case 'email':
+      return 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900 dark:text-cyan-400';
+    case 'meeting':
+      return 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400';
+    case 'demo':
+      return 'bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-400';
+    case 'linkedin_message':
+      return 'bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-400';
+    case 'other':
+      return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
     default:
       return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
   }
@@ -140,7 +174,7 @@ const ActivityItem: React.FC<{ activity: Activity }> = ({ activity }) => {
   );
 };
 
-export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ leadId }) => {
+export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ leadId, onLogActivity }) => {
   const { activities, loading } = useActivities(leadId);
 
   if (loading) {
@@ -171,11 +205,19 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ leadId }) =>
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <History className="h-5 w-5" />
-          Activity ({activities.length})
-        </CardTitle>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Activity ({activities.length})
+          </CardTitle>
+          {onLogActivity && (
+            <Button variant="outline" size="sm" onClick={onLogActivity}>
+              <Plus className="h-4 w-4 mr-1" />
+              Log Activity
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {activities.length === 0 ? (

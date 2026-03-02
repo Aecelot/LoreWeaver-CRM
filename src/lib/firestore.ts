@@ -258,12 +258,13 @@ export const initializeDefaultPipelines = async () => {
     stages: [
       { id: 'new-lead', name: 'New Lead', color: 'gray', order: 1, isActive: true },
       { id: 'researched', name: 'Researched', color: 'blue', order: 2, isActive: true },
-      { id: 'contacted', name: 'Contacted', color: 'yellow', order: 3, isActive: true },
-      { id: 'meeting', name: 'Meeting', color: 'orange', order: 4, isActive: true },
-      { id: 'proposal', name: 'Proposal', color: 'purple', order: 5, isActive: true },
-      { id: 'negotiation', name: 'Negotiation', color: 'indigo', order: 6, isActive: true },
-      { id: 'won', name: 'Won', color: 'green', order: 7, isActive: true },
-      { id: 'lost', name: 'Lost', color: 'red', order: 8, isActive: false },
+      { id: 'qualified-lead', name: 'Qualified Lead', color: 'cyan', order: 3, isActive: true },
+      { id: 'contacted', name: 'Contacted', color: 'yellow', order: 4, isActive: true },
+      { id: 'meeting', name: 'Meeting', color: 'orange', order: 5, isActive: true },
+      { id: 'proposal', name: 'Proposal', color: 'purple', order: 6, isActive: true },
+      { id: 'negotiation', name: 'Negotiation', color: 'indigo', order: 7, isActive: true },
+      { id: 'won', name: 'Won', color: 'green', order: 8, isActive: true },
+      { id: 'lost', name: 'Lost', color: 'red', order: 9, isActive: false },
     ],
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -598,6 +599,46 @@ export const setContactAsPrimary = async (leadId: string, contactLinkId: string)
   });
 
   await batch.commit();
+};
+
+// Migration: Add "Qualified Lead" stage to studio pipeline
+export const migrateStudioPipelineWithQualifiedLead = async (): Promise<{ updated: boolean; message: string }> => {
+  const pipelinesSnapshot = await getDocs(collection(db, PIPELINES_COLLECTION));
+
+  for (const pipelineDoc of pipelinesSnapshot.docs) {
+    const pipeline = pipelineDoc.data() as Pipeline;
+
+    if (pipeline.type === 'studio') {
+      // Check if "Qualified Lead" stage already exists
+      const hasQualifiedLead = pipeline.stages.some(s => s.id === 'qualified-lead' || s.name === 'Qualified Lead');
+
+      if (hasQualifiedLead) {
+        return { updated: false, message: 'Studio pipeline already has Qualified Lead stage' };
+      }
+
+      // Create new stages array with Qualified Lead inserted after Researched
+      const newStages = [
+        { id: 'new-lead', name: 'New Lead', color: 'gray', order: 1, isActive: true },
+        { id: 'researched', name: 'Researched', color: 'blue', order: 2, isActive: true },
+        { id: 'qualified-lead', name: 'Qualified Lead', color: 'cyan', order: 3, isActive: true },
+        { id: 'contacted', name: 'Contacted', color: 'yellow', order: 4, isActive: true },
+        { id: 'meeting', name: 'Meeting', color: 'orange', order: 5, isActive: true },
+        { id: 'proposal', name: 'Proposal', color: 'purple', order: 6, isActive: true },
+        { id: 'negotiation', name: 'Negotiation', color: 'indigo', order: 7, isActive: true },
+        { id: 'won', name: 'Won', color: 'green', order: 8, isActive: true },
+        { id: 'lost', name: 'Lost', color: 'red', order: 9, isActive: false },
+      ];
+
+      await updateDoc(pipelineDoc.ref, {
+        stages: newStages,
+        updatedAt: serverTimestamp(),
+      });
+
+      return { updated: true, message: 'Studio pipeline updated with Qualified Lead stage' };
+    }
+  }
+
+  return { updated: false, message: 'No studio pipeline found' };
 };
 
 // Migration: Convert embedded lead.contact to separate Contact entities

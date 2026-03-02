@@ -116,5 +116,31 @@ service cloud.firestore {
     match /contactImportRequests/{requestId} {
       allow read, write: if isAuthenticated();
     }
+
+    // Newsletter lists
+    match /newsletterLists/{listId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isAuthenticated();
+    }
+
+    // Newsletters (campaigns)
+    match /newsletters/{newsletterId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isAuthenticated();
+    }
+
+    // Newsletter recipients (tracking)
+    match /newsletterRecipients/{recipientId} {
+      allow read: if isAuthenticated();
+      // Only Cloud Functions can write to this collection
+      allow write: if false;
+    }
+
+    // Newsletter send requests - for triggering newsletter send via Firestore trigger
+    match /newsletterSendRequests/{requestId} {
+      allow read, write: if isAuthenticated();
+    }
   }
 }

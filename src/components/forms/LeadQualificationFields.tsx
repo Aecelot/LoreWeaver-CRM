@@ -145,6 +145,30 @@ export const LeadQualificationFields: React.FC<LeadQualificationFieldsProps> = (
           Contact is a key decision maker
         </Label>
       </div>
+
+      <h3 className="font-medium text-sm text-muted-foreground pt-4">Intent Signals</h3>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="hasRequestedPricing"
+          checked={values.hasRequestedPricing || false}
+          onChange={(e) => onChange('hasRequestedPricing', e.target.checked)}
+        />
+        <Label htmlFor="hasRequestedPricing" className="text-sm font-normal cursor-pointer">
+          Requested pricing information
+        </Label>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="hasRequestedDemo"
+          checked={values.hasRequestedDemo || false}
+          onChange={(e) => onChange('hasRequestedDemo', e.target.checked)}
+        />
+        <Label htmlFor="hasRequestedDemo" className="text-sm font-normal cursor-pointer">
+          Requested demo or meeting
+        </Label>
+      </div>
     </div>
   );
 };

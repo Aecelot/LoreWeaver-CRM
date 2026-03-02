@@ -6,13 +6,14 @@ import { LeadBasicFields } from './LeadBasicFields';
 import { LeadContactFields } from './LeadContactFields';
 import { LeadStudioFields } from './LeadStudioFields';
 import { LeadInvestorFields } from './LeadInvestorFields';
+import { LeadQualificationFields } from './LeadQualificationFields';
 import {
   validateRequired,
   validateEmail,
   validateUrl,
   validateLinkedInUrl,
 } from '@/lib/validators';
-import { calculatePriorityFromFitScore } from '@/lib/utils';
+import { calculatePriorityFromFitScore, calculateLeadPriority } from '@/lib/utils';
 import type { Lead, LeadContact, StudioInfo, InvestorInfo } from '@/types/lead';
 
 interface LeadFormProps {
@@ -130,7 +131,18 @@ export const LeadForm: React.FC<LeadFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    await onSubmit(values);
+
+    // Calculate priority scores before saving
+    const finalValues = { ...values };
+    if (!priorityManuallySet.current && finalValues.type) {
+      const priorityData = calculateLeadPriority(finalValues as Parameters<typeof calculateLeadPriority>[0]);
+      finalValues.priority = priorityData.priority;
+      finalValues.intentScore = priorityData.intentScore;
+      finalValues.recencyScore = priorityData.recencyScore;
+      finalValues.priorityScore = priorityData.priorityScore;
+    }
+
+    await onSubmit(finalValues);
   };
 
   return (
@@ -149,12 +161,13 @@ export const LeadForm: React.FC<LeadFormProps> = ({
         />
       </div>
 
-      {values.type === 'studio' && (
+      {(values.type === 'studio' || values.type === 'publisher') && (
         <div className="border-t pt-4">
           <LeadStudioFields
             values={values}
             onChange={handleStudioChange}
             errors={errors}
+            isPublisher={values.type === 'publisher'}
           />
         </div>
       )}
@@ -168,6 +181,14 @@ export const LeadForm: React.FC<LeadFormProps> = ({
           />
         </div>
       )}
+
+      <div className="border-t pt-4">
+        <LeadQualificationFields
+          values={values}
+          onChange={handleChange}
+          errors={errors}
+        />
+      </div>
 
       <div className="border-t pt-4 space-y-4">
         <div className="space-y-2">

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Edit, ArrowRight, MessageSquare, Activity } from 'lucide-react';
+import { PlusCircle, Edit, ArrowRight, MessageSquare, Activity, Phone, Mail, Calendar, Monitor, Linkedin, CircleDot } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { ActivityType } from '@/types/activity';
 
@@ -29,6 +29,13 @@ const activityIcons: Record<ActivityType, React.ElementType> = {
   note_added: MessageSquare,
   note_updated: MessageSquare,
   note_deleted: MessageSquare,
+  // Manual activity types
+  call: Phone,
+  email: Mail,
+  meeting: Calendar,
+  demo: Monitor,
+  linkedin_message: Linkedin,
+  other: CircleDot,
 };
 
 const activityColors: Record<ActivityType, string> = {
@@ -39,6 +46,13 @@ const activityColors: Record<ActivityType, string> = {
   note_added: 'text-yellow-500',
   note_updated: 'text-orange-500',
   note_deleted: 'text-gray-500',
+  // Manual activity types
+  call: 'text-teal-500',
+  email: 'text-cyan-500',
+  meeting: 'text-indigo-500',
+  demo: 'text-pink-500',
+  linkedin_message: 'text-sky-500',
+  other: 'text-slate-500',
 };
 
 export const ActivityFeed: React.FC<ActivityFeedProps> = ({

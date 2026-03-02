@@ -9,6 +9,7 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
+    "site": "loreweaver-crm",
     "public": "dist",
     "ignore": [
       "firebase.json",

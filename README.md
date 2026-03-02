@@ -6,14 +6,24 @@ A modern CRM application for managing game studio and investor leads, built with
 
 ### Core Functionality
 - **Lead Management**: Create, edit, and delete leads with full CRUD operations
-- **Two Lead Types**: Support for both studio and investor leads with type-specific fields
+- **Three Lead Types**: Support for studio, publisher, and investor leads with type-specific fields
 - **Pipeline Kanban**: Drag-and-drop Kanban board for visual pipeline management
 - **Notes System**: Add, edit, and delete notes on leads with status indicators (cold/warm/hot)
-- **Dashboard**: Overview with stats, recent leads, and activity feed
+- **Team Notes**: Per-owner notes allowing each team member to maintain their own notes on leads
+- **Contact Book**: Standalone contact entities with many-to-many linking to leads
+- **Activity Logging**: Manual activity tracking (calls, emails, meetings, demos, LinkedIn messages)
+- **Dashboard**: Overview with stats, recent leads, charts, and activity feed
 
 ### Data Management
 - **Import**: Import leads from Excel (.xlsx, .xls) or CSV files with preview and validation
 - **Export**: Export leads to Excel with filtering options (by type, include/exclude notes)
+- **Newsletters**: Create and send newsletters to contact lists with tracking
+
+### Lead Qualification
+- **Prospect/Lead Categories**: Distinguish unqualified prospects from qualified leads
+- **Multi-Factor Priority**: Auto-calculated priority from Fit (40%), Intent (40%), and Recency (20%)
+- **Fit Criteria Rubric**: Checkbox-based fit scoring for studios and investors
+- **Fit Tags**: Predefined tags (Narrative Focus, Innovation, Prototyping, etc.)
 
 ### User Interface
 - **Modern UI**: Built with shadcn/ui components and Tailwind CSS
@@ -108,8 +118,11 @@ npm run dev
 | 6 | Notes System | Complete |
 | 7 | Settings & Export | Complete |
 | 8 | Import | Complete |
-| 9 | Integration Testing | Pending |
-| 10 | Firebase Deployment | Pending |
+| 9 | UX Improvements & Tags | Complete |
+| 10 | Performance & Production | Complete |
+| 11 | Contact Book | Complete |
+| 12 | Lead Qualification | Complete |
+| 13 | Newsletter System | Complete |
 
 ## Data Model
 
@@ -118,35 +131,75 @@ npm run dev
 interface Lead {
   id: string;
   name: string;
-  type: 'studio' | 'investor';
+  type: 'studio' | 'publisher' | 'investor';
   status: string;
   priority: 'high' | 'medium' | 'low' | 'none';
+  category?: 'prospect' | 'lead';
   owner: string;
   contact: LeadContact;
   website: string;
   country: string;
   location: string;
   notes: string;
+  ownerNotes?: OwnerNote[];  // Per-team-member notes
   tags: string[];
   pipeline: PipelineInfo;
-  studio?: StudioInfo;     // For studio leads
+  studio?: StudioInfo;     // For studio/publisher leads
   investor?: InvestorInfo; // For investor leads
+  // Qualification fields
+  leadSource?: string;
+  hasRequestedPricing?: boolean;
+  hasRequestedDemo?: boolean;
+  isDecisionMaker?: boolean;
+  lastContactedAt?: Date;
+  // Computed scores
+  intentScore?: number;
+  recencyScore?: number;
+  priorityScore?: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   createdBy: string;
 }
 ```
 
-### Note
+### StudioInfo
 ```typescript
-interface Note {
+interface StudioInfo {
+  size: 'micro' | 'indie' | 'a' | 'aa' | 'aaa';  // Gaming industry sizes
+  type: string;
+  games: string[];
+  focus: string;
+  fitScore: number;
+  fitReason: string;
+  fitCriteria?: StudioFitCriteria;
+  fitTags?: FitTag[];  // Narrative Focus, Innovation, etc.
+}
+```
+
+### Contact
+```typescript
+interface Contact {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
+  phone?: string;
+  linkedin?: string;
+  company?: string;
+  tags?: string[];
+}
+```
+
+### Activity
+```typescript
+interface Activity {
   id: string;
   leadId: string;
-  content: string;
-  status: 'cold' | 'warm' | 'hot';
+  type: ActivityType;  // lead_created, call, email, meeting, demo, etc.
+  description: string;
+  userId: string;
+  userEmail: string;
   createdAt: Timestamp;
-  updatedAt: Timestamp;
-  createdBy: string;
 }
 ```
 

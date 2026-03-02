@@ -18,12 +18,13 @@ export interface Pipeline {
 export const DEFAULT_STUDIO_STAGES: Omit<PipelineStage, 'id'>[] = [
   { name: 'New Lead', color: 'gray', order: 1, isActive: true },
   { name: 'Researched', color: 'blue', order: 2, isActive: true },
-  { name: 'Contacted', color: 'yellow', order: 3, isActive: true },
-  { name: 'Meeting', color: 'orange', order: 4, isActive: true },
-  { name: 'Proposal', color: 'purple', order: 5, isActive: true },
-  { name: 'Negotiation', color: 'indigo', order: 6, isActive: true },
-  { name: 'Won', color: 'green', order: 7, isActive: true },
-  { name: 'Lost', color: 'red', order: 8, isActive: false },
+  { name: 'Qualified Lead', color: 'cyan', order: 3, isActive: true },
+  { name: 'Contacted', color: 'yellow', order: 4, isActive: true },
+  { name: 'Meeting', color: 'orange', order: 5, isActive: true },
+  { name: 'Proposal', color: 'purple', order: 6, isActive: true },
+  { name: 'Negotiation', color: 'indigo', order: 7, isActive: true },
+  { name: 'Won', color: 'green', order: 8, isActive: true },
+  { name: 'Lost', color: 'red', order: 9, isActive: false },
 ];
 
 export const DEFAULT_INVESTOR_STAGES: Omit<PipelineStage, 'id'>[] = [

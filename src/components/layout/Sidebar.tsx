@@ -6,6 +6,7 @@ import {
   Building,
   DollarSign,
   Mail,
+  Newspaper,
   Settings,
   LogOut,
   User,
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Studios Pipeline', href: '/pipeline/studios', icon: Building },
   { name: 'Investors Pipeline', href: '/pipeline/investors', icon: DollarSign },
   { name: 'Sequences', href: '/sequences', icon: Mail },
+  { name: 'Newsletters', href: '/newsletters', icon: Newspaper },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 

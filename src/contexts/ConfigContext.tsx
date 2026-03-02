@@ -43,6 +43,7 @@ export interface ConfigContextValue {
 // Default configuration values
 const defaultLeadTypes = [
   { value: 'studio', label: 'Studio' },
+  { value: 'publisher', label: 'Publisher' },
   { value: 'investor', label: 'Investor' },
 ];
 

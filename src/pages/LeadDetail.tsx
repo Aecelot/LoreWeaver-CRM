@@ -13,9 +13,10 @@ import {
   LeadTags,
   LeadEditDialog,
   LeadSequenceCard,
+  OwnerNotes,
 } from '@/components/leads';
 import { NotesList } from '@/components/notes';
-import { ActivityTimeline } from '@/components/activities';
+import { ActivityTimeline, LogActivityModal } from '@/components/activities';
 import { LeadContacts } from '@/components/contacts';
 import {
   AlertDialog,
@@ -34,6 +35,7 @@ export const LeadDetail: React.FC = () => {
   const { leads, loading, editLead, removeLead } = useLeads();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showLogActivityModal, setShowLogActivityModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const lead = leads.find((l) => l.id === id);
@@ -117,15 +119,19 @@ export const LeadDetail: React.FC = () => {
         <div className="space-y-6">
           <LeadContacts leadId={lead.id} />
           <LeadContactInfo lead={lead} />
-          {lead.type === 'studio' && <LeadStudioInfo lead={lead} />}
+          {(lead.type === 'studio' || lead.type === 'publisher') && <LeadStudioInfo lead={lead} />}
           {lead.type === 'investor' && <LeadInvestorInfo lead={lead} />}
           <LeadQualificationInfo lead={lead} />
         </div>
         <div className="space-y-6">
           <LeadSequenceCard lead={lead} />
+          <OwnerNotes lead={lead} />
           <NotesList leadId={lead.id} leadName={lead.name} />
           <LeadTags lead={lead} />
-          <ActivityTimeline leadId={lead.id} />
+          <ActivityTimeline
+            leadId={lead.id}
+            onLogActivity={() => setShowLogActivityModal(true)}
+          />
         </div>
       </div>
 
@@ -154,6 +160,13 @@ export const LeadDetail: React.FC = () => {
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         lead={lead}
+      />
+
+      <LogActivityModal
+        open={showLogActivityModal}
+        onOpenChange={setShowLogActivityModal}
+        leadId={lead.id}
+        leadName={lead.name}
       />
     </div>
   );

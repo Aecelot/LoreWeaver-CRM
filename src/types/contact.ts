@@ -9,6 +9,7 @@ export interface Contact {
   company?: string;
   notes?: string;
   tags?: string[];
+  unsubscribedFrom?: string[];    // Newsletter list IDs the contact has unsubscribed from
   createdAt: any; // Firestore Timestamp
   updatedAt: any; // Firestore Timestamp
   createdBy: string;

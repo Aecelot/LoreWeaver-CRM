@@ -10,3 +10,4 @@ export { LeadNotes, LeadTags } from './LeadNotes';
 export { LeadCreateDialog } from './LeadCreateDialog';
 export { LeadEditDialog } from './LeadEditDialog';
 export { LeadSequenceCard } from './LeadSequenceCard';
+export { OwnerNotes } from './OwnerNotes';

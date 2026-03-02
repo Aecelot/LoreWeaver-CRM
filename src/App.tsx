@@ -16,6 +16,8 @@ const Contacts = lazy(() => import('@/pages/Contacts').then(m => ({ default: m.C
 const Login = lazy(() => import('@/pages/Login').then(m => ({ default: m.Login })));
 const PipelineView = lazy(() => import('@/pages/PipelineView').then(m => ({ default: m.PipelineView })));
 const Sequences = lazy(() => import('@/pages/Sequences').then(m => ({ default: m.Sequences })));
+const Newsletters = lazy(() => import('@/pages/Newsletters').then(m => ({ default: m.Newsletters })));
+const NewsletterCompose = lazy(() => import('@/pages/NewsletterCompose').then(m => ({ default: m.NewsletterCompose })));
 const Settings = lazy(() => import('@/pages/Settings').then(m => ({ default: m.Settings })));
 
 // Loading fallback component
@@ -54,6 +56,9 @@ function App() {
                 <Route path="contacts" element={<Contacts />} />
                 <Route path="pipeline/:type" element={<PipelineView />} />
                 <Route path="sequences" element={<Sequences />} />
+                <Route path="newsletters" element={<Newsletters />} />
+                <Route path="newsletters/compose" element={<NewsletterCompose />} />
+                <Route path="newsletters/compose/:id" element={<NewsletterCompose />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 

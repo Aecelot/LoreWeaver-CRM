@@ -16,11 +16,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Building, DollarSign, Mail, MapPin, Eye, Pencil, Trash2, GripVertical } from 'lucide-react';
+import { Building, DollarSign, MapPin, Eye, Pencil, Trash2, GripVertical } from 'lucide-react';
 import { useLeads } from '@/hooks/useLeads';
-import { useTags } from '@/hooks/useTags';
 import { LeadEditDialog } from '@/components/leads/LeadEditDialog';
-import { getTagColorClasses } from '@/types/tag';
 import type { Lead } from '@/types/lead';
 
 interface PipelineCardProps {
@@ -38,7 +36,6 @@ const priorityColors: Record<string, string> = {
 export const PipelineCard: React.FC<PipelineCardProps> = ({ lead, isDragging }) => {
   const navigate = useNavigate();
   const { removeLead } = useLeads();
-  const { tags } = useTags();
   const [showActions, setShowActions] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -170,39 +167,35 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({ lead, isDragging }) 
             </div>
           </div>
 
-          <div className="mt-2 flex flex-wrap gap-1">
+          <div className="mt-2 flex items-center gap-2">
             {lead.priority !== 'none' && (
               <Badge variant="secondary" className={`text-xs ${priorityColors[lead.priority]}`}>
                 {lead.priority}
               </Badge>
             )}
-            {lead.tags?.slice(0, 2).map((tagName) => {
-              const tag = tags.find((t) => t.name === tagName);
-              return (
-                <Badge
-                  key={tagName}
-                  variant="secondary"
-                  className={`text-xs ${getTagColorClasses(tag?.color || 'gray')}`}
-                >
-                  {tagName}
-                </Badge>
-              );
-            })}
-            {lead.tags && lead.tags.length > 2 && (
-              <Badge variant="secondary" className="text-xs">
-                +{lead.tags.length - 2}
-              </Badge>
-            )}
+            <span className="text-xs text-muted-foreground">
+              {(() => {
+                const score = lead.studio?.fitScore ?? lead.investor?.fitScore;
+                return score !== undefined ? score : 'N/A';
+              })()}
+            </span>
           </div>
 
-          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-            {lead.contact?.email && (
-              <div className="flex items-center gap-1 truncate">
-                <Mail className="h-3 w-3" />
-                <span className="truncate">{lead.contact.email}</span>
-              </div>
-            )}
-          </div>
+          {/* Investor-specific fields */}
+          {lead.type === 'investor' && lead.investor && (
+            <div className="mt-1 space-y-0.5">
+              {lead.investor.type && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {lead.investor.type}
+                </p>
+              )}
+              {lead.investor.fundingPreferences && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {lead.investor.fundingPreferences}
+                </p>
+              )}
+            </div>
+          )}
 
           {(lead.location || lead.country) && (
             <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">

@@ -122,4 +122,10 @@ export const collections = {
   leadSequences: "leadSequences",
   emailEvents: "emailEvents",
   config: "config",
+  // Newsletter collections
+  newsletterLists: "newsletterLists",
+  newsletters: "newsletters",
+  newsletterRecipients: "newsletterRecipients",
+  newsletterSendRequests: "newsletterSendRequests",
+  contacts: "contacts",
 };

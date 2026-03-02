@@ -1,22 +1,32 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Gamepad2, Target, Star } from 'lucide-react';
-import type { Lead } from '@/types/lead';
+import { Users, Gamepad2, Target, Star, Tags } from 'lucide-react';
+import type { Lead, StudioSize } from '@/types/lead';
+import { STUDIO_SIZE_LABELS } from '@/types/lead';
 
 interface LeadStudioInfoProps {
   lead: Lead;
 }
 
+// Get display label for size
+const getSizeLabel = (size: string): string => {
+  if (size in STUDIO_SIZE_LABELS) {
+    return STUDIO_SIZE_LABELS[size as StudioSize];
+  }
+  return size; // Fallback for old string values
+};
+
 export const LeadStudioInfo: React.FC<LeadStudioInfoProps> = ({ lead }) => {
   const studio = lead.studio;
+  const isPublisher = lead.type === 'publisher';
 
   if (!studio) return null;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Studio Details</CardTitle>
+        <CardTitle className="text-lg">{isPublisher ? 'Publisher Details' : 'Studio Details'}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -25,7 +35,7 @@ export const LeadStudioInfo: React.FC<LeadStudioInfoProps> = ({ lead }) => {
               <Users className="h-4 w-4 text-muted-foreground mt-1" />
               <div>
                 <p className="text-sm font-medium">Team Size</p>
-                <p className="text-sm text-muted-foreground">{studio.size}</p>
+                <p className="text-sm text-muted-foreground">{getSizeLabel(studio.size)}</p>
               </div>
             </div>
           )}
@@ -83,6 +93,22 @@ export const LeadStudioInfo: React.FC<LeadStudioInfoProps> = ({ lead }) => {
               {studio.games.map((game, index) => (
                 <Badge key={index} variant="outline">
                   {game}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {studio.fitTags && studio.fitTags.length > 0 && (
+          <div className="pt-4 border-t">
+            <div className="flex items-center gap-2 mb-2">
+              <Tags className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm font-medium">Fit Tags</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {studio.fitTags.map((tag, index) => (
+                <Badge key={index} variant="secondary">
+                  {tag}
                 </Badge>
               ))}
             </div>

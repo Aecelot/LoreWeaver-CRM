@@ -100,7 +100,7 @@ export function truncateText(text: string, maxLength: number): string {
 }
 
 /**
- * Calculate priority based on fit score
+ * Calculate priority based on fit score (legacy - kept for backwards compatibility)
  * @param fitScore - Score from 0-10
  * @returns Priority level: 'high' | 'medium' | 'low' | 'none'
  */
@@ -110,4 +110,205 @@ export function calculatePriorityFromFitScore(fitScore: number | undefined): 'hi
   if (fitScore >= 4) return 'medium';
   if (fitScore >= 1) return 'low';
   return 'none';
+}
+
+/**
+ * Calculate intent score based on engagement signals
+ * @param lead - Lead object with intent signals
+ * @returns Score from 0-10
+ */
+export function calculateIntentScore(lead: {
+  hasRequestedPricing?: boolean;
+  hasRequestedDemo?: boolean;
+  decisionTimeline?: string;
+  isDecisionMaker?: boolean;
+  leadSource?: string;
+}): number {
+  let score = 0;
+
+  // Intent signals
+  if (lead.hasRequestedPricing) score += 3;
+  if (lead.hasRequestedDemo) score += 2;
+  if (lead.decisionTimeline) score += 2;
+  if (lead.isDecisionMaker) score += 2;
+
+  // Inbound sources indicate higher intent
+  const inboundSources = ['website', 'referral', 'inbound'];
+  if (lead.leadSource && inboundSources.includes(lead.leadSource)) {
+    score += 1;
+  }
+
+  return Math.min(score, 10);
+}
+
+/**
+ * Calculate recency score based on days since last contact
+ * @param lastContactedAt - Date of last contact
+ * @returns Score from 0-10
+ */
+export function calculateRecencyScore(lastContactedAt: Date | undefined | null): number {
+  if (!lastContactedAt) return 0;
+
+  const now = new Date();
+  const lastContact = lastContactedAt instanceof Date ? lastContactedAt : new Date(lastContactedAt);
+  const daysSinceContact = Math.floor((now.getTime() - lastContact.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (daysSinceContact <= 7) return 10;
+  if (daysSinceContact <= 14) return 8;
+  if (daysSinceContact <= 30) return 6;
+  if (daysSinceContact <= 60) return 4;
+  if (daysSinceContact <= 90) return 2;
+  return 0;
+}
+
+/**
+ * Get fit score from a lead (handles studio, publisher, and investor types)
+ * @param lead - Lead object
+ * @returns Fit score 0-10 or 0 if not set
+ */
+export function getFitScore(lead: {
+  type: 'studio' | 'publisher' | 'investor';
+  studio?: { fitScore?: number };
+  investor?: { fitScore?: number };
+}): number {
+  if (lead.type === 'studio' || lead.type === 'publisher') {
+    return lead.studio?.fitScore ?? 0;
+  }
+  return lead.investor?.fitScore ?? 0;
+}
+
+/**
+ * Calculate overall priority score combining fit, intent, and recency
+ * Formula: (Fit × 0.4) + (Intent × 0.4) + (Recency × 0.2)
+ * @param lead - Lead object
+ * @returns Score from 0-10
+ */
+export function calculatePriorityScore(lead: {
+  type: 'studio' | 'publisher' | 'investor';
+  studio?: { fitScore?: number };
+  investor?: { fitScore?: number };
+  hasRequestedPricing?: boolean;
+  hasRequestedDemo?: boolean;
+  decisionTimeline?: string;
+  isDecisionMaker?: boolean;
+  leadSource?: string;
+  lastContactedAt?: Date;
+}): number {
+  const fitScore = getFitScore(lead);
+  const intentScore = calculateIntentScore(lead);
+  const recencyScore = calculateRecencyScore(lead.lastContactedAt);
+
+  const priorityScore = (fitScore * 0.4) + (intentScore * 0.4) + (recencyScore * 0.2);
+  return Math.round(priorityScore * 10) / 10; // Round to 1 decimal
+}
+
+/**
+ * Convert priority score to priority level
+ * @param score - Priority score 0-10
+ * @returns Priority level: 'high' | 'medium' | 'low' | 'none'
+ */
+export function calculatePriorityFromScore(score: number): 'high' | 'medium' | 'low' | 'none' {
+  if (score >= 7) return 'high';
+  if (score >= 4) return 'medium';
+  if (score >= 1) return 'low';
+  return 'none';
+}
+
+/**
+ * Calculate priority and all component scores for a lead
+ * @param lead - Lead object
+ * @returns Object with all scores and priority level
+ */
+export function calculateLeadPriority(lead: {
+  type: 'studio' | 'publisher' | 'investor';
+  studio?: { fitScore?: number };
+  investor?: { fitScore?: number };
+  hasRequestedPricing?: boolean;
+  hasRequestedDemo?: boolean;
+  decisionTimeline?: string;
+  isDecisionMaker?: boolean;
+  leadSource?: string;
+  lastContactedAt?: Date;
+}): {
+  fitScore: number;
+  intentScore: number;
+  recencyScore: number;
+  priorityScore: number;
+  priority: 'high' | 'medium' | 'low' | 'none';
+} {
+  const fitScore = getFitScore(lead);
+  const intentScore = calculateIntentScore(lead);
+  const recencyScore = calculateRecencyScore(lead.lastContactedAt);
+  const priorityScore = (fitScore * 0.4) + (intentScore * 0.4) + (recencyScore * 0.2);
+  const roundedScore = Math.round(priorityScore * 10) / 10;
+
+  return {
+    fitScore,
+    intentScore,
+    recencyScore,
+    priorityScore: roundedScore,
+    priority: calculatePriorityFromScore(roundedScore),
+  };
+}
+
+/**
+ * Calculate fit score from studio fit criteria
+ * @param criteria - Studio fit criteria checkboxes
+ * @returns Score from 0-10
+ */
+export function calculateStudioFitScore(criteria: {
+  narrativeHeavyGenre?: boolean;
+  aiPositiveAttitude?: boolean;
+  rightSize?: boolean;
+  inActiveProduction?: boolean;
+  usesTargetEngine?: boolean;
+  otherScore?: number;
+} | undefined): number {
+  if (!criteria) return 0;
+
+  let score = 0;
+
+  if (criteria.narrativeHeavyGenre) score += 3;
+  if (criteria.aiPositiveAttitude) score += 3;
+  if (criteria.rightSize) score += 2;
+  if (criteria.inActiveProduction) score += 1;
+  if (criteria.usesTargetEngine) score += 1;
+
+  // Add custom "other" score
+  if (criteria.otherScore && criteria.otherScore > 0) {
+    score += criteria.otherScore;
+  }
+
+  return Math.min(score, 10);
+}
+
+/**
+ * Calculate fit score from investor fit criteria
+ * @param criteria - Investor fit criteria checkboxes
+ * @returns Score from 0-10
+ */
+export function calculateInvestorFitScore(criteria: {
+  preSeedFocus?: boolean;
+  gamingSectorActive?: boolean;
+  aiDevToolsThesis?: boolean;
+  euBased?: boolean;
+  relevantPortfolio?: boolean;
+  otherScore?: number;
+} | undefined): number {
+  if (!criteria) return 0;
+
+  let score = 0;
+
+  if (criteria.preSeedFocus) score += 3;
+  if (criteria.gamingSectorActive) score += 3;
+  if (criteria.aiDevToolsThesis) score += 2;
+  if (criteria.euBased) score += 1;
+  if (criteria.relevantPortfolio) score += 1;
+
+  // Add custom "other" score
+  if (criteria.otherScore && criteria.otherScore > 0) {
+    score += criteria.otherScore;
+  }
+
+  return Math.min(score, 10);
 }

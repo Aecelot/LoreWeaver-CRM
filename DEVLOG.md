@@ -461,3 +461,362 @@ initializeDefaultPipelines: vi.fn().mockResolvedValue(['id1', 'id2'])
 - Priority auto-calculates when fit score changes in the form
 - Manual priority change disables auto-calculation for that form session
 - Fit score range normalized to 0-10 (form label and max updated)
+
+---
+
+## Phase 13: Newsletter System
+
+**Status**: Complete
+
+**Date**: March 2, 2026
+
+### Completed
+- **Newsletter Lists**: Created Customer Newsletter and Investor Newsletter lists with tag/lead-type filtering
+- **Manual Subscriber Management**: Add/remove contacts manually from lists
+- **Newsletter Compose Page**: Markdown editor with template variables and preview
+- **Template Variables**: Support for {{name}}, {{firstName}}, {{company}}, {{unsubscribeUrl}}
+- **Gmail Integration**: Sends newsletters via existing Gmail API connection
+- **Open Tracking**: Pixel tracking for email opens
+- **Click Tracking**: Link wrapping for click tracking
+- **Unsubscribe Handling**: HTTP endpoint with simple confirmation page
+- **Newsletter Stats**: Track total, sent, opened, clicked, unsubscribed
+- **Cloud Functions**: sendNewsletter, newsletterOpen, newsletterClick, newsletterUnsubscribe
+
+### Key Files
+- `src/types/newsletter.ts` - Newsletter, NewsletterList, NewsletterRecipient types
+- `src/hooks/useNewsletterLists.ts` - List management with auto-initialization
+- `src/hooks/useNewsletters.ts` - Newsletter CRUD and send trigger
+- `src/pages/Newsletters.tsx` - Main page with Lists/Drafts/Sent tabs
+- `src/pages/NewsletterCompose.tsx` - Compose page with markdown editor
+- `src/components/newsletters/MarkdownEditor.tsx` - Markdown textarea with preview
+- `src/components/newsletters/ListCard.tsx` - List overview card
+- `src/components/newsletters/ListEditor.tsx` - Edit list filters/subscribers
+- `src/components/newsletters/CampaignCard.tsx` - Campaign stats display
+- `src/components/newsletters/RecipientPreview.tsx` - Subscriber list table
+- `functions/src/newsletter.ts` - Newsletter sending logic
+- `functions/src/index.ts` - Added newsletter Cloud Functions
+
+### Data Model
+- **newsletterLists**: List configuration with filter rules and manual includes/excludes
+- **newsletters**: Campaign content with status and stats
+- **newsletterRecipients**: Individual recipient tracking
+- **newsletterSendRequests**: Trigger documents for Cloud Functions
+- **contacts.unsubscribedFrom**: Array of list IDs contact has unsubscribed from
+
+### Technical Notes
+- Default lists auto-created on first page load
+- Subscriber computation: tag filter + lead type filter + manual includes - manual excludes - unsubscribed
+- Rate limiting: 100ms delay between emails to avoid Gmail API limits
+- Markdown converted to HTML in Cloud Function before sending
+- Tracking uses base64url-encoded JSON with contactId, listId, newsletterId
+
+---
+
+## March 2, 2026 - Pipeline Card Cleanup
+
+### Changes
+- Simplified pipeline card layout to show only essential info:
+  - Company name
+  - Primary contact
+  - Priority badge
+  - Fit score (compact number or "N/A")
+  - Location
+- Removed tags display and email from cards
+- Added `fitScore` field to `InvestorInfo` interface for parity with `StudioInfo`
+
+### Files Modified
+- `src/types/lead.ts` - Added fitScore to InvestorInfo
+- `src/components/pipeline/PipelineCard.tsx` - Simplified card layout
+
+---
+
+## March 2, 2026 - Studio Pipeline: Qualified Lead Stage
+
+### Changes
+- Added "Qualified Lead" stage to studio pipeline between Researched and Contacted
+- This stage represents when a user has decided a lead is worth pursuing
+- New pipeline order: New Lead → Researched → **Qualified Lead** → Contacted → Meeting → Proposal → Negotiation → Won → Lost
+- Added migration function to update existing pipelines
+- Added migration button to Settings page under Pipeline Setup
+
+### Files Modified
+- `src/types/pipeline.ts` - Added Qualified Lead to DEFAULT_STUDIO_STAGES
+- `src/lib/firestore.ts` - Updated initializeDefaultPipelines and added migrateStudioPipelineWithQualifiedLead
+- `src/pages/Settings.tsx` - Added "Add Qualified Lead Stage" migration button
+
+### Migration Required
+For existing databases, run the migration from Settings → Pipeline Setup → "Add Qualified Lead Stage"
+
+---
+
+## March 2, 2026 - Multi-Factor Priority System
+
+### Overview
+Replaced the simple fitScore-only priority calculation with a multi-factor system that considers **Fit**, **Intent**, and **Recency**.
+
+### Priority Formula
+```
+Priority Score = (Fit × 40%) + (Intent × 40%) + (Recency × 20%)
+```
+
+Score mapping:
+- >= 7 → High (red)
+- >= 4 → Medium (yellow)
+- >= 1 → Low (blue)
+- < 1 → None (gray)
+
+### Component Scores
+
+**Intent Score (0-10)** - Calculated from signals:
+- `hasRequestedPricing`: +3 points
+- `hasRequestedDemo`: +2 points
+- `decisionTimeline` exists: +2 points
+- `isDecisionMaker`: +2 points
+- Inbound source (website/referral): +1 point
+
+**Recency Score (0-10)** - Based on `lastContactedAt`:
+- 0-7 days: 10
+- 8-14 days: 8
+- 15-30 days: 6
+- 31-60 days: 4
+- 61-90 days: 2
+- 90+ days or never: 0
+
+### New Features
+- Intent signal checkboxes in lead form ("Requested pricing", "Requested demo")
+- Priority breakdown popover on lead detail header showing all component scores
+- Auto-calculation on save (respects manual override)
+- Stored component scores (`intentScore`, `recencyScore`, `priorityScore`) for transparency
+
+### Files Modified
+- `src/types/lead.ts` - Added intent signal fields and score fields
+- `src/lib/utils.ts` - Added calculation functions
+- `src/components/forms/LeadQualificationFields.tsx` - Added intent checkboxes
+- `src/components/forms/LeadForm.tsx` - Added qualification fields, auto-calculate on save
+- `src/components/leads/LeadHeader.tsx` - Added priority breakdown popover
+
+### Technical Notes
+- Existing `calculatePriorityFromFitScore()` kept for backwards compatibility
+- Manual priority changes disable auto-calculation for that form session
+- Qualification fields section now rendered in LeadForm (was previously defined but unused)
+
+---
+
+## March 2, 2026 - Investor Database Import
+
+### Summary
+Imported 2,310 investors from VC database spreadsheets into the CRM.
+
+### Data Sources
+1. **VB_VC Europe Seed & Series A database.xlsx** - 2,563 rows
+2. **Filtered_Angels_VCs_PreSeed.xlsx** - 329 rows (all duplicates of file 1)
+
+### Import Results
+- **2,310 investor leads** created
+- **2,049 partner contacts** created from LinkedIn profiles
+- **582 duplicates** skipped
+
+### Import Script
+Created one-time import script at `functions/src/importInvestors.ts`:
+- Uses Firebase Admin SDK with application default credentials
+- Extracts partner names from LinkedIn URLs
+- Creates Contact entities and links them to leads
+- Parses sectors into tags
+- Duplicate detection by name/website
+- Batch operations for performance (400 ops per batch)
+
+### Data Mapping
+| Excel Column | Lead Field |
+|-------------|------------|
+| VC Name | `name` |
+| Websites | `website` |
+| Country | `country`, `investor.hqRegion` |
+| Investment Size | `investor.fundingPreferences` |
+| Sectors | `investor.investmentFocus`, `tags` |
+| General Email | `contact.email` |
+| Rounds | `investor.type` |
+| Country 1/2 | `investor.geographicalRegions` |
+| Partners' LinkedIn | Separate Contact entities |
+
+### Files Created
+- `functions/src/importInvestors.ts` - Import script
+- `functions/package.json` - Added xlsx, ts-node dependencies
+
+---
+
+## March 2, 2026 - Investor Card Enhancements
+
+### Changes
+- Added investor-specific fields to pipeline cards:
+  - **Rounds** (`investor.type`) - e.g., "Pre-Seed, Seed, Series A"
+  - **Investment Size** (`investor.fundingPreferences`) - e.g., "$100K - $5M"
+- These fields only appear on investor leads, not studio leads
+
+### Files Modified
+- `src/components/pipeline/PipelineCard.tsx` - Added conditional investor fields
+
+---
+
+## March 2, 2026 - Fit Score Criteria System
+
+### Overview
+Replaced manual fit score input (0-10 slider) with a criteria-based rubric system. Users now check specific criteria checkboxes that auto-calculate to a fit score. Includes an "Other" field for custom adjustments with reason text.
+
+### Studio Fit Criteria
+| Criteria | Points | Description |
+|----------|--------|-------------|
+| Narrative-heavy genre | +3 | RPG, adventure, visual novel, story-driven |
+| AI-positive attitude | +3 | Eager to use AI to innovate/scale production |
+| Right size | +2 | Indie to AA studio (not solo, not massive AAA) |
+| In active production | +1 | Currently making a game |
+| Uses target engine | +1 | Unity or Unreal |
+| Other | 0-10 | Custom adjustment with reason |
+
+### Investor Fit Criteria
+| Criteria | Points | Description |
+|----------|--------|-------------|
+| Pre-seed stage focus | +3 | Invests at pre-seed stage |
+| Gaming sector active | +3 | Active in gaming/interactive entertainment |
+| AI/Dev Tools thesis | +2 | Invests in AI, dev tools, or B2B SaaS |
+| EU-based | +1 | EU-based or invests in EU |
+| Relevant portfolio | +1 | Has gaming or dev tools portfolio companies |
+| Other | 0-10 | Custom adjustment with reason |
+
+### New Features
+- Type-specific fit criteria checkboxes in studio/investor forms
+- Real-time fit score calculation as checkboxes change
+- "Other" field with reason text + score adjustment
+- Score capped at 10 maximum
+- Auto-syncs fitScore on mount when criteria exists
+
+### New Type Interfaces
+```typescript
+interface StudioFitCriteria {
+  narrativeHeavyGenre?: boolean;    // +3
+  aiPositiveAttitude?: boolean;      // +3
+  rightSize?: boolean;               // +2
+  inActiveProduction?: boolean;      // +1
+  usesTargetEngine?: boolean;        // +1
+  otherScore?: number;               // 0-10
+  otherReason?: string;              // Explanation
+}
+
+interface InvestorFitCriteria {
+  preSeedFocus?: boolean;            // +3
+  gamingSectorActive?: boolean;      // +3
+  aiDevToolsThesis?: boolean;        // +2
+  euBased?: boolean;                 // +1
+  relevantPortfolio?: boolean;       // +1
+  otherScore?: number;               // 0-10
+  otherReason?: string;              // Explanation
+}
+```
+
+### Files Modified
+- `src/types/lead.ts` - Added StudioFitCriteria and InvestorFitCriteria interfaces, added fitCriteria field to StudioInfo and InvestorInfo
+- `src/lib/utils.ts` - Added calculateStudioFitScore() and calculateInvestorFitScore() functions
+- `src/components/forms/LeadStudioFields.tsx` - Rewrote with fit criteria checkboxes and Other field
+- `src/components/forms/LeadInvestorFields.tsx` - Rewrote with fit criteria checkboxes and Other field
+
+### Technical Notes
+- Fit score auto-calculates when any criteria changes
+- Score stored in both fitCriteria (breakdown) and fitScore (total) for backwards compatibility
+- "Other" score clamped to 0-10 range
+- Total score capped at 10 regardless of criteria sum
+- useEffect syncs fitScore on component mount if criteria exists but score differs
+
+---
+
+## March 2, 2026 - CRM Enhancements (CSV Analysis)
+
+### Overview
+Based on analysis of external leads spreadsheet (SHARED - LoreWeaver - Client Leads - Studios.csv), implemented several features to better align the CRM with the team's actual workflow.
+
+### New Features
+
+#### 1. Publisher Lead Type
+- Added 'publisher' as a new lead type alongside 'studio' and 'investor'
+- Publishers share studio fields (size, games, focus, fit criteria) since they're evaluated similarly
+- Lead detail page shows "Publisher Details" section for publisher leads
+
+#### 2. Industry-Standard Studio Sizes
+Replaced generic company size options with gaming industry standard:
+| Value | Label |
+|-------|-------|
+| micro | Micro (1-3) |
+| indie | Indie (3-15) |
+| a | A (15-50) |
+| aa | AA (50-250) |
+| aaa | AAA (250+) |
+
+#### 3. Multi-Owner Notes (Team Notes)
+- New OwnerNotes component for lead detail page
+- Each team member can have their own note with timestamp
+- Notes keyed by author name, showing when last updated
+- Color-coded avatars per owner (Rijk=blue, Collin=green, Stephan=purple, John=orange)
+- Users can only edit their own notes
+
+#### 4. Fit Tags
+Added predefined fit tags matching the spreadsheet:
+- Narrative Focus
+- User of Similar Tools
+- Prototyping
+- Innovation
+- Efficiency
+- Emergent Narrative
+
+Tags displayed as badges in studio form (toggle buttons) and on lead detail page.
+
+#### 5. Manual Activity Logging
+- New "Log Activity" button on activity timeline
+- Modal to log calls, emails, meetings, demos, LinkedIn messages, other
+- Activity types have distinct icons and colors:
+  - Call: teal, Phone icon
+  - Email: cyan, Mail icon
+  - Meeting: indigo, Calendar icon
+  - Demo: pink, Monitor icon
+  - LinkedIn: sky blue, Linkedin icon
+  - Other: slate, CircleDot icon
+
+### New Types
+```typescript
+// Owner note structure
+interface OwnerNote {
+  author: string;
+  content: string;
+  updatedAt: Date;
+}
+
+// Studio size enum
+type StudioSize = 'micro' | 'indie' | 'a' | 'aa' | 'aaa';
+
+// Fit tags
+type FitTag = 'Narrative Focus' | 'User of Similar Tools' | 'Prototyping'
+            | 'Innovation' | 'Efficiency' | 'Emergent Narrative';
+
+// Manual activity types
+type ManualActivityType = 'call' | 'email' | 'meeting' | 'demo' | 'linkedin_message' | 'other';
+```
+
+### Files Created
+- `src/components/leads/OwnerNotes.tsx` - Team notes component
+- `src/components/activities/LogActivityModal.tsx` - Activity logging modal
+
+### Files Modified
+- `src/types/lead.ts` - Added OwnerNote, StudioSize, FitTag types; ownerNotes field on Lead; fitTags on StudioInfo
+- `src/types/activity.ts` - Added manual activity types and labels
+- `src/contexts/ConfigContext.tsx` - Added 'publisher' to lead types
+- `src/components/forms/LeadForm.tsx` - Show studio fields for publishers
+- `src/components/forms/LeadStudioFields.tsx` - Size dropdown, fit tags, isPublisher prop
+- `src/components/leads/LeadStudioInfo.tsx` - Display fit tags, use size labels, support publishers
+- `src/components/activities/ActivityTimeline.tsx` - New activity icons/colors, Log Activity button
+- `src/components/leads/index.ts` - Export OwnerNotes
+- `src/components/activities/index.ts` - Export LogActivityModal
+- `src/pages/LeadDetail.tsx` - Integrated OwnerNotes, LogActivityModal, publisher studio info
+
+### Technical Notes
+- Publisher leads reuse StudioInfo since they share most attributes with studios
+- Size field supports both new StudioSize enum and old string values for backwards compatibility
+- OwnerNotes stored as array on lead document (not separate collection)
+- Author name extracted from user email (before @)
+- Activity logging uses existing createActivity() function

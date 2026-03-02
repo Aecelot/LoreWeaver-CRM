@@ -476,3 +476,197 @@ export const onContactImportRequest = functions.firestore
       });
     }
   });
+
+// =============================================================================
+// NEWSLETTER FUNCTIONS
+// =============================================================================
+
+import {
+  processNewsletterSend,
+  handleNewsletterOpen,
+  handleNewsletterClick,
+  handleNewsletterUnsubscribe,
+} from "./newsletter";
+
+/**
+ * Trigger newsletter send when request document is created
+ */
+export const onNewsletterSendRequest = functions.firestore
+  .document("newsletterSendRequests/{requestId}")
+  .onCreate(async (snap) => {
+    const data = snap.data();
+    const newsletterId = data?.newsletterId;
+
+    if (!newsletterId) {
+      await snap.ref.update({
+        status: "error",
+        error: "No newsletter ID provided",
+        completedAt: Timestamp.now(),
+      });
+      return;
+    }
+
+    await processNewsletterSend(newsletterId, snap.ref);
+  });
+
+/**
+ * Track newsletter opens via tracking pixel
+ */
+export const newsletterOpen = functions.https.onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
+    try {
+      const { id } = req.query;
+
+      if (typeof id === "string") {
+        await handleNewsletterOpen(id);
+      }
+    } catch (error) {
+      console.error("Error tracking newsletter open:", error);
+    }
+
+    // Return 1x1 transparent GIF
+    const pixel = Buffer.from(
+      "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+      "base64"
+    );
+    res.set("Content-Type", "image/gif");
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.send(pixel);
+  });
+});
+
+/**
+ * Track newsletter link clicks
+ */
+export const newsletterClick = functions.https.onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
+    try {
+      const { id } = req.query;
+
+      if (typeof id === "string") {
+        const url = await handleNewsletterClick(id);
+
+        if (url) {
+          res.redirect(302, url);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error("Error tracking newsletter click:", error);
+    }
+
+    res.status(400).send("Invalid tracking link");
+  });
+});
+
+/**
+ * Handle newsletter unsubscribe
+ */
+export const newsletterUnsubscribe = functions.https.onRequest(async (req, res) => {
+  try {
+    const { id } = req.query;
+
+    if (typeof id === "string") {
+      const success = await handleNewsletterUnsubscribe(id);
+
+      if (success) {
+        res.send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Unsubscribed</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                background: #f9fafb;
+              }
+              .container {
+                text-align: center;
+                padding: 2rem;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                max-width: 400px;
+              }
+              h1 {
+                color: #111827;
+                margin: 0 0 0.5rem;
+              }
+              p {
+                color: #6b7280;
+                margin: 0;
+              }
+              .icon {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="icon">✓</div>
+              <h1>Unsubscribed</h1>
+              <p>You have been successfully unsubscribed from this mailing list.</p>
+            </div>
+          </body>
+          </html>
+        `);
+        return;
+      }
+    }
+
+    res.status(400).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Error</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f9fafb;
+          }
+          .container {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-width: 400px;
+          }
+          h1 {
+            color: #111827;
+            margin: 0 0 0.5rem;
+          }
+          p {
+            color: #6b7280;
+            margin: 0;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>Invalid Link</h1>
+          <p>This unsubscribe link is invalid or has expired.</p>
+        </div>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error("Error handling unsubscribe:", error);
+    res.status(500).send("An error occurred");
+  }
+});

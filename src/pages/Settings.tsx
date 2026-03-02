@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { ExportDialog, ImportDialog, TagManager, GmailConnection, GoogleContactsImport } from '@/components/settings';
-import { initializeDefaultPipelines, migrateLeadsWithCreatedBy } from '@/lib/firestore';
+import { initializeDefaultPipelines, migrateLeadsWithCreatedBy, migrateStudioPipelineWithQualifiedLead } from '@/lib/firestore';
 import { Download, Upload, User, Database, GitBranch, Wrench } from 'lucide-react';
 
 export const Settings: React.FC = () => {
@@ -15,6 +15,8 @@ export const Settings: React.FC = () => {
   const [pipelinesInitialized, setPipelinesInitialized] = useState(false);
   const [migrating, setMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState<{ updated: number; skipped: number } | null>(null);
+  const [migratingPipeline, setMigratingPipeline] = useState(false);
+  const [pipelineMigrationResult, setPipelineMigrationResult] = useState<{ updated: boolean; message: string } | null>(null);
 
   const handleInitializePipelines = async () => {
     setInitializingPipelines(true);
@@ -44,6 +46,23 @@ export const Settings: React.FC = () => {
       toast.error('Migration failed');
     } finally {
       setMigrating(false);
+    }
+  };
+
+  const handlePipelineMigration = async () => {
+    setMigratingPipeline(true);
+    try {
+      const result = await migrateStudioPipelineWithQualifiedLead();
+      setPipelineMigrationResult(result);
+      if (result.updated) {
+        toast.success(result.message);
+      } else {
+        toast.info(result.message);
+      }
+    } catch {
+      toast.error('Pipeline migration failed');
+    } finally {
+      setMigratingPipeline(false);
     }
   };
 
@@ -165,21 +184,43 @@ export const Settings: React.FC = () => {
           </CardTitle>
           <CardDescription>Initialize default pipeline stages</CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-3">
-            Create the default Studio and Investor pipelines with predefined stages.
-            Only run this once when setting up the CRM.
-          </p>
-          <Button
-            onClick={handleInitializePipelines}
-            disabled={initializingPipelines || pipelinesInitialized}
-          >
-            {initializingPipelines
-              ? 'Initializing...'
-              : pipelinesInitialized
-              ? 'Pipelines Created'
-              : 'Initialize Pipelines'}
-          </Button>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-sm text-muted-foreground mb-3">
+              Create the default Studio and Investor pipelines with predefined stages.
+              Only run this once when setting up the CRM.
+            </p>
+            <Button
+              onClick={handleInitializePipelines}
+              disabled={initializingPipelines || pipelinesInitialized}
+            >
+              {initializingPipelines
+                ? 'Initializing...'
+                : pipelinesInitialized
+                ? 'Pipelines Created'
+                : 'Initialize Pipelines'}
+            </Button>
+          </div>
+
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-medium mb-2">Add Qualified Lead Stage</h4>
+            <p className="text-sm text-muted-foreground mb-3">
+              Add the "Qualified Lead" stage to the studio pipeline (between Researched and Contacted).
+              Run this once if your pipeline was created before this stage was added.
+            </p>
+            {pipelineMigrationResult && (
+              <p className={`text-sm mb-3 ${pipelineMigrationResult.updated ? 'text-green-600' : 'text-muted-foreground'}`}>
+                {pipelineMigrationResult.message}
+              </p>
+            )}
+            <Button
+              onClick={handlePipelineMigration}
+              disabled={migratingPipeline}
+              variant="outline"
+            >
+              {migratingPipeline ? 'Updating Pipeline...' : 'Add Qualified Lead Stage'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

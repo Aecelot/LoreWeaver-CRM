@@ -2,7 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Trash2, ExternalLink, Building, DollarSign, ArrowUpCircle } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { ArrowLeft, Edit, Trash2, ExternalLink, Building, DollarSign, ArrowUpCircle, Info } from 'lucide-react';
+import { calculateLeadPriority, getFitScore } from '@/lib/utils';
 import type { Lead } from '@/types/lead';
 
 interface LeadHeaderProps {
@@ -30,6 +32,10 @@ const categoryColors: Record<string, string> = {
 };
 
 export const LeadHeader: React.FC<LeadHeaderProps> = ({ lead, onEdit, onDelete, onQualify }) => {
+  // Calculate priority scores for display
+  const priorityData = calculateLeadPriority(lead);
+  const fitScore = getFitScore(lead);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -56,9 +62,43 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({ lead, onEdit, onDelete, 
                 <Badge variant="secondary" className={categoryColors[lead.category || 'prospect']}>
                   {lead.category === 'lead' ? 'Qualified Lead' : 'Prospect'}
                 </Badge>
-                <Badge variant="secondary" className={priorityColors[lead.priority]}>
-                  {lead.priority} priority
-                </Badge>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Badge
+                      variant="secondary"
+                      className={`${priorityColors[lead.priority]} cursor-pointer hover:opacity-80 inline-flex items-center gap-1`}
+                    >
+                      {lead.priority} priority
+                      <Info className="h-3 w-3" />
+                    </Badge>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64">
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm">Priority Breakdown</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Fit Score</span>
+                          <span className="font-medium">{fitScore}/10</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Intent Score</span>
+                          <span className="font-medium">{priorityData.intentScore}/10</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Recency Score</span>
+                          <span className="font-medium">{priorityData.recencyScore}/10</span>
+                        </div>
+                        <div className="border-t pt-2 flex justify-between">
+                          <span className="font-medium">Priority Score</span>
+                          <span className="font-bold">{priorityData.priorityScore}/10</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Formula: (Fit × 40%) + (Intent × 40%) + (Recency × 20%)
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <span className="text-sm text-muted-foreground capitalize">
                   {lead.status}
                 </span>
