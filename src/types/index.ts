@@ -1,5 +1,6 @@
 export * from './activity';
 export * from './contact';
+export * from './filters';
 export * from './lead';
 export * from './newsletter';
 export * from './note';
