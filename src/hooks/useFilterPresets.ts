@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const COLLECTION = 'filterPresets';
 
-export const useFilterPresets = (pipelineType: 'studio' | 'investor') => {
+export const useFilterPresets = (pipelineType: 'studio' | 'investor' | 'community') => {
   const [presets, setPresets] = useState<FilterPreset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

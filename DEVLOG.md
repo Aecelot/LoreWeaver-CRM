@@ -820,3 +820,138 @@ type ManualActivityType = 'call' | 'email' | 'meeting' | 'demo' | 'linkedin_mess
 - OwnerNotes stored as array on lead document (not separate collection)
 - Author name extracted from user email (before @)
 - Activity logging uses existing createActivity() function
+
+---
+
+## March 4, 2026 - Community Lead Type & Channels Pipeline
+
+### Overview
+Added a new lead type "Community" for tracking distribution channels like Discord servers, Reddit communities, game jams, and other places to promote the Architect beta to indie developers and students.
+
+### Why Communities Are Different
+Unlike studio/publisher/investor leads (transactional relationships where you pitch → they buy/invest), communities are **distribution channels** where you provide value → members self-select into your beta. This requires different tracking: relationship progression, engagement quality, and attribution rather than deal stages.
+
+### New Features
+
+#### 1. Community Lead Type
+- Added `community` as fourth lead type alongside studio, publisher, investor
+- Community-specific fields:
+  - **Platform**: Discord, Reddit, Twitter/X, YouTube, itch.io, Forum, Jam Organization, University, Association, Mastodon, Other
+  - **Community Type**: Narrative Tools, Game Dev General, Engine-Specific, Writing/Worldbuilding, Student, Indie Platform, Jam Community, Other
+  - **Estimated Reach**: Number of members/followers/participants
+  - **Engagement Quality**: High/Medium/Low
+  - **Access Method**: Public, Invite-only, Paid, Application-required
+  - **Platform URL**: Direct link to the community
+  - **Posting Rules**: Notes about self-promo rules, showcase channels
+  - **Narrative Focus**: Boolean flag for IF/storytelling communities
+  - **Referral Code**: Auto-generated for UTM attribution (e.g., `reddit-gamedev`)
+  - **Beta Signups Attributed**: Manual counter for tracking conversions
+
+#### 2. Community Fit Criteria
+| Criteria | Points | Description |
+|----------|--------|-------------|
+| Narrative Focused | +3 | Specifically about narrative/IF/storytelling |
+| Active Community | +3 | Regular posts, engaged members |
+| Tool-Friendly | +2 | Welcomes tool showcases, has promo channels |
+| Target Demographic | +2 | Indies, students, small teams |
+| Large Reach | +1 | 10K+ members/followers |
+| Low Saturation | +1 | Not flooded with competing tool announcements |
+| Other | 0-10 | Custom adjustment with reason |
+
+**Max score: 12** (vs 10 for other lead types)
+
+#### 3. Channels Pipeline
+New pipeline with relationship-focused stages:
+1. **Identified** (gray) - We know this community exists
+2. **Researched** (blue) - Investigated rules, activity level, fit
+3. **Joined** (cyan) - We're a member, observing
+4. **Participating** (yellow) - Contributing value (not promoting yet)
+5. **Relationship Built** (orange) - Known to mods/key members
+6. **Promotion Approved** (purple) - Green-lit to share Architect
+7. **Active Channel** (indigo) - Regularly posting, getting traction
+8. **High-Performing** (green) - Consistent beta signups
+9. **Inactive** (red) - Community died, banned, or poor ROI
+
+#### 4. Community-Specific Tags
+Pre-created tags for community leads:
+- `narrative-focused` - Core narrative/IF audience
+- `high-engagement` - Very active community
+- `jam-related` - Game jam organization
+- `student-focused` - University/academic
+- `tool-friendly` - Welcomes tool posts
+- `quick-win` - Easy to post, low barrier
+- `influencer-present` - Notable devs/YouTubers present
+- `seasonal` - Only active at certain times
+- `verified-active` - Confirmed still active
+- `relationship-needed` - Need to build relationship first
+
+#### 5. Attribution System
+- Each community gets a unique `referralCode` (auto-generated from name + platform)
+- Use in UTM parameters: `?ref=discord-renpy`
+- Track `betaSignupsAttributed` manually (or via webhook later)
+- Enables ROI calculation: `conversionRate = betaSignups / estimatedReach`
+
+### New Type Interfaces
+```typescript
+type CommunityPlatform = 'discord' | 'reddit' | 'twitter' | 'youtube' | 'itch'
+                       | 'forum' | 'jam-org' | 'university' | 'association'
+                       | 'mastodon' | 'other';
+
+type CommunityType = 'narrative-tools' | 'gamedev-general' | 'engine-specific'
+                   | 'writing' | 'student' | 'indie-platform' | 'jam-community' | 'other';
+
+interface CommunityFitCriteria {
+  narrativeFocused?: boolean;     // +3
+  activeCommunity?: boolean;      // +3
+  toolFriendly?: boolean;         // +2
+  targetDemographic?: boolean;    // +2
+  largeReach?: boolean;           // +1
+  lowSaturation?: boolean;        // +1
+  otherScore?: number;            // 0-10
+  otherReason?: string;
+}
+
+interface CommunityInfo {
+  platform: CommunityPlatform;
+  communityType: CommunityType;
+  estimatedReach: number;
+  engagementQuality: 'high' | 'medium' | 'low';
+  accessMethod: 'public' | 'invite-only' | 'paid' | 'application';
+  platformUrl: string;
+  postingRules?: string;
+  narrativeFocus: boolean;
+  referralCode: string;
+  betaSignupsAttributed: number;
+  lastPostedAt?: Date;
+  fitScore: number;
+  fitCriteria?: CommunityFitCriteria;
+  lastVerifiedAt?: Date;
+}
+```
+
+### Files Created
+- `src/components/forms/LeadCommunityFields.tsx` - Community-specific form fields
+
+### Files Modified
+- `src/types/lead.ts` - Added CommunityInfo, CommunityFitCriteria, CommunityPlatform, CommunityType
+- `src/types/pipeline.ts` - Added 'community' to Pipeline type, DEFAULT_COMMUNITY_STAGES
+- `src/lib/firestore.ts` - Added community to initializeDefaultPipelines, initializeCommunityPipeline, initializeCommunityTags
+- `src/lib/utils.ts` - Added calculateCommunityFitScore
+- `src/contexts/ConfigContext.tsx` - Added 'community' to defaultLeadTypes
+- `src/hooks/usePipeline.ts` - Added getCommunityPipeline
+- `src/components/forms/LeadForm.tsx` - Added LeadCommunityFields section
+- `src/components/forms/index.ts` - Export LeadCommunityFields
+- `src/components/leads/LeadCreateDialog.tsx` - Added 'community' to defaultType prop
+- `src/components/leads/LeadsBulkActions.tsx` - Added community pipeline stages to bulk actions
+- `src/pages/Settings.tsx` - Added "Add Community Features" button for existing databases
+
+### Migration for Existing Databases
+Run from Settings → Pipeline Setup → "Add Community Features" to:
+1. Create the Channels pipeline
+2. Create community-specific tags
+
+### Technical Notes
+- Community leads use existing Contact linking system for moderator/champion relationships
+- Referral code auto-generates from community name + platform slug
+- Fit score normalized to 0-10 range for priority calculation (even though max is 12)
+- Priority auto-calculates from community fit score like other lead types

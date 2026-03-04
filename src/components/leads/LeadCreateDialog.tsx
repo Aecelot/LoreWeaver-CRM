@@ -28,7 +28,7 @@ import type { Lead } from '@/types/lead';
 interface LeadCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultType?: 'studio' | 'investor';
+  defaultType?: 'studio' | 'investor' | 'community';
 }
 
 export const LeadCreateDialog: React.FC<LeadCreateDialogProps> = ({

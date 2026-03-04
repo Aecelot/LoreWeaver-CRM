@@ -29,7 +29,7 @@ export const LeadsBulkActions: React.FC<LeadsBulkActionsProps> = ({
   onSetPriority,
   onSetStage,
 }) => {
-  const { getStudioPipeline, getInvestorPipeline } = usePipeline();
+  const { getStudioPipeline, getInvestorPipeline, getCommunityPipeline } = usePipeline();
 
   if (selectedCount === 0) return null;
 
@@ -37,9 +37,11 @@ export const LeadsBulkActions: React.FC<LeadsBulkActionsProps> = ({
   const selectedTypes = new Set(selectedLeads.map((l) => l.type));
   const showStudioStages = selectedTypes.has('studio') || selectedTypes.size === 0;
   const showInvestorStages = selectedTypes.has('investor') || selectedTypes.size === 0;
+  const showCommunityStages = selectedTypes.has('community') || selectedTypes.size === 0;
 
   const studioPipeline = getStudioPipeline();
   const investorPipeline = getInvestorPipeline();
+  const communityPipeline = getCommunityPipeline();
 
   return (
     <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
@@ -79,7 +81,7 @@ export const LeadsBulkActions: React.FC<LeadsBulkActionsProps> = ({
       </DropdownMenu>
 
       {/* Stage Change Dropdown */}
-      {onSetStage && (showStudioStages || showInvestorStages) && (
+      {onSetStage && (showStudioStages || showInvestorStages || showCommunityStages) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
@@ -112,6 +114,25 @@ export const LeadsBulkActions: React.FC<LeadsBulkActionsProps> = ({
               <>
                 <DropdownMenuLabel>Investor Stages</DropdownMenuLabel>
                 {investorPipeline.stages
+                  .filter((s) => s.isActive)
+                  .sort((a, b) => a.order - b.order)
+                  .map((stage) => (
+                    <DropdownMenuItem
+                      key={stage.id}
+                      onClick={() => onSetStage(stage.id)}
+                    >
+                      {stage.name}
+                    </DropdownMenuItem>
+                  ))}
+              </>
+            )}
+            {(showStudioStages || showInvestorStages) && showCommunityStages && communityPipeline && (
+              <DropdownMenuSeparator />
+            )}
+            {showCommunityStages && communityPipeline && (
+              <>
+                <DropdownMenuLabel>Community Stages</DropdownMenuLabel>
+                {communityPipeline.stages
                   .filter((s) => s.isActive)
                   .sort((a, b) => a.order - b.order)
                   .map((stage) => (

@@ -64,6 +64,98 @@ export interface InvestorFitCriteria {
   otherReason?: string;              // Explanation for other score
 }
 
+// Community platform types
+export type CommunityPlatform =
+  | 'discord'
+  | 'reddit'
+  | 'twitter'
+  | 'youtube'
+  | 'itch'
+  | 'forum'
+  | 'jam-org'
+  | 'university'
+  | 'association'
+  | 'mastodon'
+  | 'other';
+
+export const COMMUNITY_PLATFORM_LABELS: Record<CommunityPlatform, string> = {
+  discord: 'Discord',
+  reddit: 'Reddit',
+  twitter: 'Twitter/X',
+  youtube: 'YouTube',
+  itch: 'Itch.io',
+  forum: 'Forum',
+  'jam-org': 'Game Jam Organization',
+  university: 'University/Student',
+  association: 'Association/Organization',
+  mastodon: 'Mastodon',
+  other: 'Other',
+};
+
+// Community type categories
+export type CommunityType =
+  | 'narrative-tools'
+  | 'gamedev-general'
+  | 'engine-specific'
+  | 'writing'
+  | 'student'
+  | 'indie-platform'
+  | 'jam-community'
+  | 'other';
+
+export const COMMUNITY_TYPE_LABELS: Record<CommunityType, string> = {
+  'narrative-tools': 'Narrative Tools (Twine, Ink, Ren\'Py)',
+  'gamedev-general': 'Game Dev General',
+  'engine-specific': 'Engine-Specific (Godot, Unity, RPG Maker)',
+  'writing': 'Writing/Worldbuilding',
+  'student': 'Student/Academic',
+  'indie-platform': 'Indie Platform (itch.io, Game Jolt)',
+  'jam-community': 'Game Jam Community',
+  'other': 'Other',
+};
+
+// Fit criteria for communities - checkboxes that sum to fit score
+export interface CommunityFitCriteria {
+  narrativeFocused?: boolean;        // +3 - Specifically about narrative/IF/storytelling
+  activeCommunity?: boolean;         // +3 - Regular posts, engaged members
+  toolFriendly?: boolean;            // +2 - Welcomes tool showcases, has promo channels
+  targetDemographic?: boolean;       // +2 - Indies, students, small teams
+  largeReach?: boolean;              // +1 - 10K+ members/followers
+  lowSaturation?: boolean;           // +1 - Not flooded with competing tools
+  otherScore?: number;               // 0-10 custom adjustment
+  otherReason?: string;              // Explanation for other score
+}
+
+export interface CommunityInfo {
+  // Classification
+  platform: CommunityPlatform;
+  communityType: CommunityType;
+
+  // Reach & Quality
+  estimatedReach: number;
+  engagementQuality: 'high' | 'medium' | 'low';
+  accessMethod: 'public' | 'invite-only' | 'paid' | 'application';
+
+  // Access
+  platformUrl: string;
+  postingRules?: string;
+  narrativeFocus: boolean;
+
+  // Attribution
+  referralCode: string;
+
+  // Metrics (manually updated)
+  betaSignupsAttributed: number;
+  lastPostedAt?: Date;
+
+  // Fit scoring
+  fitScore: number;
+  fitCriteria?: CommunityFitCriteria;
+
+  // Verification
+  lastVerifiedAt?: Date;
+}
+
 export interface StudioInfo {
   size: StudioSize | string; // StudioSize preferred, string for backwards compat
   type: string;
@@ -92,7 +184,7 @@ export type LeadCategory = 'prospect' | 'lead';
 
 export interface Lead {
   id: string;
-  type: 'studio' | 'publisher' | 'investor';
+  type: 'studio' | 'publisher' | 'investor' | 'community';
   name: string;
   status: string;
   priority: 'high' | 'medium' | 'low' | 'none';
@@ -107,6 +199,7 @@ export interface Lead {
   ownerNotes?: OwnerNote[];
   studio?: StudioInfo;  // Also used for publishers
   investor?: InvestorInfo;
+  community?: CommunityInfo;
   pipeline: {
     pipelineId: string;
     stageId: string;
@@ -139,7 +232,7 @@ export interface LeadFormData extends Omit<Lead, 'id' | 'createdAt' | 'updatedAt
 }
 
 export interface LeadFilters {
-  type?: 'studio' | 'investor';
+  type?: 'studio' | 'investor' | 'community';
   category?: LeadCategory;
   status?: string;
   priority?: 'high' | 'medium' | 'low' | 'none';

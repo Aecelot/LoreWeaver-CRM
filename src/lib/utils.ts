@@ -167,12 +167,18 @@ export function calculateRecencyScore(lastContactedAt: Date | undefined | null):
  * @returns Fit score 0-10 or 0 if not set
  */
 export function getFitScore(lead: {
-  type: 'studio' | 'publisher' | 'investor';
+  type: 'studio' | 'publisher' | 'investor' | 'community';
   studio?: { fitScore?: number };
   investor?: { fitScore?: number };
+  community?: { fitScore?: number };
 }): number {
   if (lead.type === 'studio' || lead.type === 'publisher') {
     return lead.studio?.fitScore ?? 0;
+  }
+  if (lead.type === 'community') {
+    // Community fit score is 0-12, normalize to 0-10 for priority calculation
+    const communityScore = lead.community?.fitScore ?? 0;
+    return (communityScore / 12) * 10;
   }
   return lead.investor?.fitScore ?? 0;
 }
@@ -184,9 +190,10 @@ export function getFitScore(lead: {
  * @returns Score from 0-10
  */
 export function calculatePriorityScore(lead: {
-  type: 'studio' | 'publisher' | 'investor';
+  type: 'studio' | 'publisher' | 'investor' | 'community';
   studio?: { fitScore?: number };
   investor?: { fitScore?: number };
+  community?: { fitScore?: number };
   hasRequestedPricing?: boolean;
   hasRequestedDemo?: boolean;
   decisionTimeline?: string;
@@ -220,9 +227,10 @@ export function calculatePriorityFromScore(score: number): 'high' | 'medium' | '
  * @returns Object with all scores and priority level
  */
 export function calculateLeadPriority(lead: {
-  type: 'studio' | 'publisher' | 'investor';
+  type: 'studio' | 'publisher' | 'investor' | 'community';
   studio?: { fitScore?: number };
   investor?: { fitScore?: number };
+  community?: { fitScore?: number };
   hasRequestedPricing?: boolean;
   hasRequestedDemo?: boolean;
   decisionTimeline?: string;
@@ -311,4 +319,37 @@ export function calculateInvestorFitScore(criteria: {
   }
 
   return Math.min(score, 10);
+}
+
+/**
+ * Calculate fit score from community fit criteria
+ * @param criteria - Community fit criteria checkboxes
+ * @returns Score from 0-12 (higher max due to more criteria)
+ */
+export function calculateCommunityFitScore(criteria: {
+  narrativeFocused?: boolean;
+  activeCommunity?: boolean;
+  toolFriendly?: boolean;
+  targetDemographic?: boolean;
+  largeReach?: boolean;
+  lowSaturation?: boolean;
+  otherScore?: number;
+} | undefined): number {
+  if (!criteria) return 0;
+
+  let score = 0;
+
+  if (criteria.narrativeFocused) score += 3;
+  if (criteria.activeCommunity) score += 3;
+  if (criteria.toolFriendly) score += 2;
+  if (criteria.targetDemographic) score += 2;
+  if (criteria.largeReach) score += 1;
+  if (criteria.lowSaturation) score += 1;
+
+  // Add custom "other" score
+  if (criteria.otherScore && criteria.otherScore > 0) {
+    score += criteria.otherScore;
+  }
+
+  return Math.min(score, 12);
 }

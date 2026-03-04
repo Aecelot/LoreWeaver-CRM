@@ -45,6 +45,7 @@ const defaultLeadTypes = [
   { value: 'studio', label: 'Studio' },
   { value: 'publisher', label: 'Publisher' },
   { value: 'investor', label: 'Investor' },
+  { value: 'community', label: 'Community' },
 ];
 
 const defaultPriorities = [

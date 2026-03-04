@@ -9,7 +9,7 @@ export interface PipelineStage {
 export interface Pipeline {
   id: string;
   name: string;
-  type: 'studio' | 'investor';
+  type: 'studio' | 'investor' | 'community';
   stages: PipelineStage[];
   createdAt: any;
   updatedAt: any;
@@ -37,4 +37,17 @@ export const DEFAULT_INVESTOR_STAGES: Omit<PipelineStage, 'id'>[] = [
   { name: 'Term Sheet', color: 'cyan', order: 7, isActive: true },
   { name: 'Closed', color: 'green', order: 8, isActive: true },
   { name: 'Passed', color: 'red', order: 9, isActive: false },
+];
+
+// Community/Channels pipeline - tracks relationship progression with communities
+export const DEFAULT_COMMUNITY_STAGES: Omit<PipelineStage, 'id'>[] = [
+  { name: 'Identified', color: 'gray', order: 1, isActive: true },
+  { name: 'Researched', color: 'blue', order: 2, isActive: true },
+  { name: 'Joined', color: 'cyan', order: 3, isActive: true },
+  { name: 'Participating', color: 'yellow', order: 4, isActive: true },
+  { name: 'Relationship Built', color: 'orange', order: 5, isActive: true },
+  { name: 'Promotion Approved', color: 'purple', order: 6, isActive: true },
+  { name: 'Active Channel', color: 'indigo', order: 7, isActive: true },
+  { name: 'High-Performing', color: 'green', order: 8, isActive: true },
+  { name: 'Inactive', color: 'red', order: 9, isActive: false },
 ];

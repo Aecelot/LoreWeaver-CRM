@@ -289,9 +289,29 @@ export const initializeDefaultPipelines = async () => {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
-  
+
+  // Community/Channels pipeline - tracks relationship progression with communities
+  const communityRef = doc(collection(db, PIPELINES_COLLECTION));
+  batch.set(communityRef, {
+    name: 'Channels Pipeline',
+    type: 'community',
+    stages: [
+      { id: 'identified', name: 'Identified', color: 'gray', order: 1, isActive: true },
+      { id: 'researched', name: 'Researched', color: 'blue', order: 2, isActive: true },
+      { id: 'joined', name: 'Joined', color: 'cyan', order: 3, isActive: true },
+      { id: 'participating', name: 'Participating', color: 'yellow', order: 4, isActive: true },
+      { id: 'relationship-built', name: 'Relationship Built', color: 'orange', order: 5, isActive: true },
+      { id: 'promotion-approved', name: 'Promotion Approved', color: 'purple', order: 6, isActive: true },
+      { id: 'active-channel', name: 'Active Channel', color: 'indigo', order: 7, isActive: true },
+      { id: 'high-performing', name: 'High-Performing', color: 'green', order: 8, isActive: true },
+      { id: 'inactive', name: 'Inactive', color: 'red', order: 9, isActive: false },
+    ],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
   await batch.commit();
-  return [studioRef.id, investorRef.id];
+  return [studioRef.id, investorRef.id, communityRef.id];
 };
 
 // Tag operations
@@ -717,4 +737,80 @@ export const migrateEmbeddedContacts = async (userId: string): Promise<{ created
   }
 
   return { created, linked, skipped };
+};
+
+// Initialize community pipeline (for existing databases)
+export const initializeCommunityPipeline = async (): Promise<{ created: boolean; message: string }> => {
+  const pipelinesSnapshot = await getDocs(collection(db, PIPELINES_COLLECTION));
+
+  // Check if community pipeline already exists
+  const hasCommunityPipeline = pipelinesSnapshot.docs.some(
+    doc => (doc.data() as { type?: string }).type === 'community'
+  );
+
+  if (hasCommunityPipeline) {
+    return { created: false, message: 'Community pipeline already exists' };
+  }
+
+  // Create community pipeline
+  await addDoc(collection(db, PIPELINES_COLLECTION), {
+    name: 'Channels Pipeline',
+    type: 'community',
+    stages: [
+      { id: 'identified', name: 'Identified', color: 'gray', order: 1, isActive: true },
+      { id: 'researched', name: 'Researched', color: 'blue', order: 2, isActive: true },
+      { id: 'joined', name: 'Joined', color: 'cyan', order: 3, isActive: true },
+      { id: 'participating', name: 'Participating', color: 'yellow', order: 4, isActive: true },
+      { id: 'relationship-built', name: 'Relationship Built', color: 'orange', order: 5, isActive: true },
+      { id: 'promotion-approved', name: 'Promotion Approved', color: 'purple', order: 6, isActive: true },
+      { id: 'active-channel', name: 'Active Channel', color: 'indigo', order: 7, isActive: true },
+      { id: 'high-performing', name: 'High-Performing', color: 'green', order: 8, isActive: true },
+      { id: 'inactive', name: 'Inactive', color: 'red', order: 9, isActive: false },
+    ],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  return { created: true, message: 'Community pipeline created successfully' };
+};
+
+// Initialize community-specific tags
+export const initializeCommunityTags = async (userId: string): Promise<{ created: number; skipped: number }> => {
+  const existingTagsSnapshot = await getDocs(collection(db, TAGS_COLLECTION));
+  const existingTagNames = new Set(
+    existingTagsSnapshot.docs.map(doc => (doc.data() as { name?: string }).name?.toLowerCase())
+  );
+
+  const communityTags = [
+    { name: 'narrative-focused', color: 'purple' },
+    { name: 'high-engagement', color: 'green' },
+    { name: 'jam-related', color: 'orange' },
+    { name: 'student-focused', color: 'blue' },
+    { name: 'tool-friendly', color: 'cyan' },
+    { name: 'quick-win', color: 'yellow' },
+    { name: 'influencer-present', color: 'pink' },
+    { name: 'seasonal', color: 'indigo' },
+    { name: 'verified-active', color: 'green' },
+    { name: 'relationship-needed', color: 'orange' },
+  ];
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const tag of communityTags) {
+    if (existingTagNames.has(tag.name.toLowerCase())) {
+      skipped++;
+      continue;
+    }
+
+    await addDoc(collection(db, TAGS_COLLECTION), {
+      name: tag.name,
+      color: tag.color,
+      createdAt: serverTimestamp(),
+      createdBy: userId,
+    });
+    created++;
+  }
+
+  return { created, skipped };
 };

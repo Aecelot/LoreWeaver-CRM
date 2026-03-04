@@ -31,6 +31,10 @@ export const usePipeline = () => {
     return pipelines.find(p => p.type === 'investor');
   };
 
+  const getCommunityPipeline = () => {
+    return pipelines.find(p => p.type === 'community');
+  };
+
   const moveLeadToStage = async (leadId: string, stageId: string) => {
     try {
       await updateLeadStage(leadId, stageId);
@@ -46,6 +50,7 @@ export const usePipeline = () => {
     error,
     getStudioPipeline,
     getInvestorPipeline,
+    getCommunityPipeline,
     moveLeadToStage,
   };
 };

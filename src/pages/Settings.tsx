@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { ExportDialog, ImportDialog, TagManager, GmailConnection, GoogleContactsImport } from '@/components/settings';
-import { initializeDefaultPipelines, migrateLeadsWithCreatedBy, migrateStudioPipelineWithQualifiedLead } from '@/lib/firestore';
+import { initializeDefaultPipelines, migrateLeadsWithCreatedBy, migrateStudioPipelineWithQualifiedLead, initializeCommunityPipeline, initializeCommunityTags } from '@/lib/firestore';
 import { Download, Upload, User, Database, GitBranch, Wrench } from 'lucide-react';
 
 export const Settings: React.FC = () => {
@@ -17,6 +17,8 @@ export const Settings: React.FC = () => {
   const [migrationResult, setMigrationResult] = useState<{ updated: number; skipped: number } | null>(null);
   const [migratingPipeline, setMigratingPipeline] = useState(false);
   const [pipelineMigrationResult, setPipelineMigrationResult] = useState<{ updated: boolean; message: string } | null>(null);
+  const [initializingCommunity, setInitializingCommunity] = useState(false);
+  const [communityResult, setCommunityResult] = useState<{ pipeline: string; tags: string } | null>(null);
 
   const handleInitializePipelines = async () => {
     setInitializingPipelines(true);
@@ -63,6 +65,30 @@ export const Settings: React.FC = () => {
       toast.error('Pipeline migration failed');
     } finally {
       setMigratingPipeline(false);
+    }
+  };
+
+  const handleInitializeCommunity = async () => {
+    if (!user?.uid) return;
+    setInitializingCommunity(true);
+    try {
+      const pipelineResult = await initializeCommunityPipeline();
+      const tagsResult = await initializeCommunityTags(user.uid);
+
+      setCommunityResult({
+        pipeline: pipelineResult.message,
+        tags: `${tagsResult.created} tags created, ${tagsResult.skipped} already existed`,
+      });
+
+      if (pipelineResult.created || tagsResult.created > 0) {
+        toast.success('Community features initialized');
+      } else {
+        toast.info('Community features already set up');
+      }
+    } catch {
+      toast.error('Failed to initialize community features');
+    } finally {
+      setInitializingCommunity(false);
     }
   };
 
@@ -219,6 +245,27 @@ export const Settings: React.FC = () => {
               variant="outline"
             >
               {migratingPipeline ? 'Updating Pipeline...' : 'Add Qualified Lead Stage'}
+            </Button>
+          </div>
+
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-medium mb-2">Community/Channels Pipeline</h4>
+            <p className="text-sm text-muted-foreground mb-3">
+              Add the Community lead type for tracking distribution channels (Discord servers,
+              subreddits, game jams, etc.). This creates the Channels pipeline and community-specific tags.
+            </p>
+            {communityResult && (
+              <div className="text-sm mb-3 space-y-1">
+                <p className="text-muted-foreground">{communityResult.pipeline}</p>
+                <p className="text-muted-foreground">{communityResult.tags}</p>
+              </div>
+            )}
+            <Button
+              onClick={handleInitializeCommunity}
+              disabled={initializingCommunity}
+              variant="outline"
+            >
+              {initializingCommunity ? 'Initializing...' : 'Add Community Features'}
             </Button>
           </div>
         </CardContent>

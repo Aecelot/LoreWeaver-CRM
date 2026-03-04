@@ -6,6 +6,7 @@ import { LeadBasicFields } from './LeadBasicFields';
 import { LeadContactFields } from './LeadContactFields';
 import { LeadStudioFields } from './LeadStudioFields';
 import { LeadInvestorFields } from './LeadInvestorFields';
+import { LeadCommunityFields } from './LeadCommunityFields';
 import { LeadQualificationFields } from './LeadQualificationFields';
 import {
   validateRequired,
@@ -14,7 +15,7 @@ import {
   validateLinkedInUrl,
 } from '@/lib/validators';
 import { calculatePriorityFromFitScore, calculateLeadPriority } from '@/lib/utils';
-import type { Lead, LeadContact, StudioInfo, InvestorInfo } from '@/types/lead';
+import type { Lead, LeadContact, StudioInfo, InvestorInfo, CommunityInfo } from '@/types/lead';
 
 interface LeadFormProps {
   initialValues?: Partial<Lead>;
@@ -89,6 +90,22 @@ export const LeadForm: React.FC<LeadFormProps> = ({
 
   const handleInvestorChange = useCallback((_field: keyof Lead, value: Partial<InvestorInfo>) => {
     setValues((prev) => ({ ...prev, investor: { ...prev.investor, ...value } as InvestorInfo }));
+  }, []);
+
+  const handleCommunityChange = useCallback((_field: keyof Lead, value: Partial<CommunityInfo>) => {
+    setValues((prev) => {
+      const newValues = { ...prev, community: { ...prev.community, ...value } as CommunityInfo };
+
+      // Auto-calculate priority from fit score if not manually set
+      if ('fitScore' in value && !priorityManuallySet.current) {
+        const fitScore = value.fitScore;
+        // Normalize community score (0-12) to 0-10 range for priority calculation
+        const normalizedScore = fitScore !== undefined ? (fitScore / 12) * 10 : undefined;
+        newValues.priority = calculatePriorityFromFitScore(normalizedScore);
+      }
+
+      return newValues;
+    });
   }, []);
 
   const validate = (): boolean => {
@@ -177,6 +194,16 @@ export const LeadForm: React.FC<LeadFormProps> = ({
           <LeadInvestorFields
             values={values}
             onChange={handleInvestorChange}
+            errors={errors}
+          />
+        </div>
+      )}
+
+      {values.type === 'community' && (
+        <div className="border-t pt-4">
+          <LeadCommunityFields
+            values={values}
+            onChange={handleCommunityChange}
             errors={errors}
           />
         </div>

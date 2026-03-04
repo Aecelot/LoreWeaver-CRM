@@ -107,7 +107,7 @@ export interface ColumnFilter {
 export interface FilterPreset {
   id: string;
   name: string;
-  pipelineType: 'studio' | 'investor';
+  pipelineType: 'studio' | 'investor' | 'community';
   stageId?: string; // null = applies to all columns
   filters: ColumnFilter;
   sort?: ColumnSort;

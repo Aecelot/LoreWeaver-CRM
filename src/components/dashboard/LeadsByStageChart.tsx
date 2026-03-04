@@ -15,7 +15,7 @@ import type { Lead } from '@/types/lead';
 
 interface LeadsByStageChartProps {
   leads: Lead[];
-  pipelineType: 'studio' | 'investor';
+  pipelineType: 'studio' | 'investor' | 'community';
   loading?: boolean;
 }
 

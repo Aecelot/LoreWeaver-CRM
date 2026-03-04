@@ -8,22 +8,27 @@ import { FilterPresets } from '@/components/pipeline/FilterPresets';
 import type { ColumnFilter, ColumnSort } from '@/types/filters';
 
 export const PipelineView: React.FC = () => {
-  const { type } = useParams<{ type: 'studios' | 'investors' }>();
+  const { type } = useParams<{ type: 'studios' | 'investors' | 'channels' }>();
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Lift filter/sort state to page level for presets integration
   const [columnFilters, setColumnFilters] = useState<Record<string, ColumnFilter>>({});
   const [columnSorts, setColumnSorts] = useState<Record<string, ColumnSort>>({});
 
   // Convert URL param to pipeline type
-  const pipelineType = type === 'investors' ? 'investor' : type === 'studios' ? 'studio' : null;
+  const pipelineType = type === 'investors' ? 'investor'
+    : type === 'studios' ? 'studio'
+    : type === 'channels' ? 'community'
+    : null;
 
   // Redirect if invalid type
   if (!pipelineType) {
     return <Navigate to="/pipeline/studios" replace />;
   }
 
-  const pipelineTitle = pipelineType === 'investor' ? 'Investors' : 'Studios';
+  const pipelineTitle = pipelineType === 'investor' ? 'Investors'
+    : pipelineType === 'community' ? 'Channels'
+    : 'Studios';
 
   // Handle preset application
   const handleApplyPreset = useCallback((
