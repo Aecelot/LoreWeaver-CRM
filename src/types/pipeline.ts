@@ -9,7 +9,7 @@ export interface PipelineStage {
 export interface Pipeline {
   id: string;
   name: string;
-  type: 'studio' | 'investor' | 'community';
+  type: 'studio' | 'investor' | 'community' | 'competition';
   stages: PipelineStage[];
   createdAt: any;
   updatedAt: any;
@@ -50,4 +50,13 @@ export const DEFAULT_COMMUNITY_STAGES: Omit<PipelineStage, 'id'>[] = [
   { name: 'Active Channel', color: 'indigo', order: 7, isActive: true },
   { name: 'High-Performing', color: 'green', order: 8, isActive: true },
   { name: 'Inactive', color: 'red', order: 9, isActive: false },
+];
+
+// Competition pipeline - tracks competitive research and monitoring
+export const DEFAULT_COMPETITION_STAGES: Omit<PipelineStage, 'id'>[] = [
+  { name: 'New', color: 'gray', order: 1, isActive: true },
+  { name: 'Researched', color: 'blue', order: 2, isActive: true },
+  { name: 'Tracking', color: 'yellow', order: 3, isActive: true },
+  { name: 'Direct - Architect', color: 'red', order: 4, isActive: true },
+  { name: 'Direct - Director', color: 'orange', order: 5, isActive: true },
 ];

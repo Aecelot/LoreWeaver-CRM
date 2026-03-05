@@ -310,8 +310,24 @@ export const initializeDefaultPipelines = async () => {
     updatedAt: serverTimestamp(),
   });
 
+  // Competition pipeline - tracks competitive research and monitoring
+  const competitionRef = doc(collection(db, PIPELINES_COLLECTION));
+  batch.set(competitionRef, {
+    name: 'Competition Pipeline',
+    type: 'competition',
+    stages: [
+      { id: 'new', name: 'New', color: 'gray', order: 1, isActive: true },
+      { id: 'researched', name: 'Researched', color: 'blue', order: 2, isActive: true },
+      { id: 'tracking', name: 'Tracking', color: 'yellow', order: 3, isActive: true },
+      { id: 'direct-architect', name: 'Direct - Architect', color: 'red', order: 4, isActive: true },
+      { id: 'direct-director', name: 'Direct - Director', color: 'orange', order: 5, isActive: true },
+    ],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
   await batch.commit();
-  return [studioRef.id, investorRef.id, communityRef.id];
+  return [studioRef.id, investorRef.id, communityRef.id, competitionRef.id];
 };
 
 // Tag operations
@@ -813,4 +829,35 @@ export const initializeCommunityTags = async (userId: string): Promise<{ created
   }
 
   return { created, skipped };
+};
+
+// Initialize competition pipeline (for existing databases)
+export const initializeCompetitionPipeline = async (): Promise<{ created: boolean; message: string }> => {
+  const pipelinesSnapshot = await getDocs(collection(db, PIPELINES_COLLECTION));
+
+  // Check if competition pipeline already exists
+  const hasCompetitionPipeline = pipelinesSnapshot.docs.some(
+    doc => (doc.data() as { type?: string }).type === 'competition'
+  );
+
+  if (hasCompetitionPipeline) {
+    return { created: false, message: 'Competition pipeline already exists' };
+  }
+
+  // Create competition pipeline
+  await addDoc(collection(db, PIPELINES_COLLECTION), {
+    name: 'Competition Pipeline',
+    type: 'competition',
+    stages: [
+      { id: 'new', name: 'New', color: 'gray', order: 1, isActive: true },
+      { id: 'researched', name: 'Researched', color: 'blue', order: 2, isActive: true },
+      { id: 'tracking', name: 'Tracking', color: 'yellow', order: 3, isActive: true },
+      { id: 'direct-architect', name: 'Direct - Architect', color: 'red', order: 4, isActive: true },
+      { id: 'direct-director', name: 'Direct - Director', color: 'orange', order: 5, isActive: true },
+    ],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  return { created: true, message: 'Competition pipeline created successfully' };
 };

@@ -9,6 +9,7 @@ import {
   LeadContactInfo,
   LeadStudioInfo,
   LeadInvestorInfo,
+  LeadCompetitionInfo,
   LeadQualificationInfo,
   LeadTags,
   LeadEditDialog,
@@ -121,6 +122,7 @@ export const LeadDetail: React.FC = () => {
           <LeadContactInfo lead={lead} />
           {(lead.type === 'studio' || lead.type === 'publisher') && <LeadStudioInfo lead={lead} />}
           {lead.type === 'investor' && <LeadInvestorInfo lead={lead} />}
+          {lead.type === 'competition' && <LeadCompetitionInfo lead={lead} />}
           <LeadQualificationInfo lead={lead} />
         </div>
         <div className="space-y-6">

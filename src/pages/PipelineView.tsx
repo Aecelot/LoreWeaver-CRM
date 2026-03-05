@@ -8,7 +8,7 @@ import { FilterPresets } from '@/components/pipeline/FilterPresets';
 import type { ColumnFilter, ColumnSort } from '@/types/filters';
 
 export const PipelineView: React.FC = () => {
-  const { type } = useParams<{ type: 'studios' | 'investors' | 'channels' }>();
+  const { type } = useParams<{ type: 'studios' | 'investors' | 'channels' | 'competition' }>();
   const [searchTerm, setSearchTerm] = useState('');
 
   // Lift filter/sort state to page level for presets integration
@@ -19,6 +19,7 @@ export const PipelineView: React.FC = () => {
   const pipelineType = type === 'investors' ? 'investor'
     : type === 'studios' ? 'studio'
     : type === 'channels' ? 'community'
+    : type === 'competition' ? 'competition'
     : null;
 
   // Redirect if invalid type
@@ -28,6 +29,7 @@ export const PipelineView: React.FC = () => {
 
   const pipelineTitle = pipelineType === 'investor' ? 'Investors'
     : pipelineType === 'community' ? 'Channels'
+    : pipelineType === 'competition' ? 'Competition'
     : 'Studios';
 
   // Handle preset application

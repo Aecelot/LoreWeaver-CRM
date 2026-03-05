@@ -46,6 +46,7 @@ const defaultLeadTypes = [
   { value: 'publisher', label: 'Publisher' },
   { value: 'investor', label: 'Investor' },
   { value: 'community', label: 'Community' },
+  { value: 'competition', label: 'Competition' },
 ];
 
 const defaultPriorities = [

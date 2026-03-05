@@ -156,6 +156,41 @@ export interface CommunityInfo {
   lastVerifiedAt?: Date;
 }
 
+// Competition target market
+export type CompetitionTargetMarket = 'architect' | 'director' | 'both';
+
+export const COMPETITION_TARGET_LABELS: Record<CompetitionTargetMarket, string> = {
+  architect: 'Architect',
+  director: 'Director',
+  both: 'Both',
+};
+
+export interface CompetitionInfo {
+  // What they offer
+  products: string[];
+  targetMarket: CompetitionTargetMarket;
+
+  // Assessment
+  threatLevel: 1 | 2 | 3 | 4 | 5;
+  strengths: string[];
+  weaknesses: string[];
+
+  // Context
+  fundingStage?: string;
+  teamSize?: string;
+  foundedYear?: number;
+  differentiator?: string;
+
+  // Links & metrics
+  website?: string;
+  pricingInfo?: string;
+  lastChecked?: Date | any; // Firestore Timestamp or Date
+  estimatedPaidUsers?: number;
+  estimatedFreeUsers?: number;
+  estimatedRevenue?: number;
+  amountRaised?: number;
+}
+
 export interface StudioInfo {
   size: StudioSize | string; // StudioSize preferred, string for backwards compat
   type: string;
@@ -184,7 +219,7 @@ export type LeadCategory = 'prospect' | 'lead';
 
 export interface Lead {
   id: string;
-  type: 'studio' | 'publisher' | 'investor' | 'community';
+  type: 'studio' | 'publisher' | 'investor' | 'community' | 'competition';
   name: string;
   status: string;
   priority: 'high' | 'medium' | 'low' | 'none';
@@ -200,6 +235,7 @@ export interface Lead {
   studio?: StudioInfo;  // Also used for publishers
   investor?: InvestorInfo;
   community?: CommunityInfo;
+  competition?: CompetitionInfo;
   pipeline: {
     pipelineId: string;
     stageId: string;
@@ -232,7 +268,7 @@ export interface LeadFormData extends Omit<Lead, 'id' | 'createdAt' | 'updatedAt
 }
 
 export interface LeadFilters {
-  type?: 'studio' | 'investor' | 'community';
+  type?: 'studio' | 'investor' | 'community' | 'competition';
   category?: LeadCategory;
   status?: string;
   priority?: 'high' | 'medium' | 'low' | 'none';

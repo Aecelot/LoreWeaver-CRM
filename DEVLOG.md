@@ -955,3 +955,227 @@ Run from Settings → Pipeline Setup → "Add Community Features" to:
 - Referral code auto-generates from community name + platform slug
 - Fit score normalized to 0-10 range for priority calculation (even though max is 12)
 - Priority auto-calculates from community fit score like other lead types
+
+---
+
+## March 5, 2026 - Server-Side Pagination Architecture
+
+### Overview
+Rebuilt the data fetching architecture to support 50k+ leads with server-side pagination. The old architecture loaded all leads into memory via Firestore real-time subscriptions, which caused slow page loads and would not scale.
+
+### Architecture Changes
+
+**Before (Problems):**
+- `useLeads` hook loaded ALL leads via `onSnapshot()`
+- Client-side filtering and sorting
+- No pagination - entire dataset in memory
+- Freezing on large datasets, high Firestore read costs
+
+**After (Solution):**
+- Express REST API in Cloud Functions with paginated endpoints
+- TanStack Query for caching, polling (15s), and state management
+- Server-side filtering, sorting, and pagination
+- Page numbers with configurable page size (25/50/100)
+- Firestore real-time only for single lead detail views
+
+### New Backend Infrastructure
+
+#### API Layer (`functions/src/api/`)
+```
+api/
+├── index.ts                 # Express app with CORS, auth, error handling
+├── middleware/
+│   ├── auth.ts              # Firebase Auth token verification
+│   ├── error-handler.ts     # Consistent error responses, ApiError class
+│   └── validate.ts          # Zod request validation middleware
+├── leads/
+│   ├── leads.routes.ts      # Route definitions
+│   ├── leads.controller.ts  # Request handlers
+│   ├── leads.service.ts     # Business logic, Firestore queries
+│   └── leads.schema.ts      # Zod validation schemas
+└── shared/
+    ├── types.ts             # Shared API types (PaginatedResponse, etc.)
+    └── paginator.ts         # Generic pagination utility
+```
+
+#### API Endpoints
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/leads` | Paginated list with filters |
+| GET | `/api/leads/:id` | Single lead |
+| POST | `/api/leads` | Create lead |
+| PATCH | `/api/leads/:id` | Update lead |
+| DELETE | `/api/leads/:id` | Delete lead |
+| GET | `/api/leads/stats` | Aggregated statistics |
+
+### New Frontend Infrastructure
+
+#### TanStack Query Setup (`src/lib/query.ts`)
+- QueryClient with 15s stale time and polling interval
+- Query key factory for consistent cache invalidation
+- Automatic refetch on window focus
+
+#### API Client (`src/api/client.ts`)
+- Authenticated fetch wrapper using Firebase ID tokens
+- TypeScript-safe request/response handling
+- Error class for typed error handling
+
+#### New Hooks
+- `useLeadsList` - Paginated list with TanStack Query
+- `useLeadDetail` - Single lead with Firestore real-time (for detail pages)
+- `useLeadMutations` - Create/update/delete with cache invalidation
+
+#### UI Components
+- `Pagination` - Page numbers, first/last/prev/next, page size selector
+- `LeadsPaginated` - New leads page using server-side pagination
+
+### Dependencies Added
+
+**Backend (functions/package.json):**
+- express ^4.21.0
+- cors ^2.8.5
+- zod ^3.24.0
+- @types/express, @types/cors
+
+**Frontend (package.json):**
+- @tanstack/react-query ^5.60.0
+- @tanstack/react-query-devtools ^5.60.0
+
+### Files Created
+- `functions/src/api/**` - Complete API layer (12 files)
+- `src/api/client.ts` - API client
+- `src/api/leads.api.ts` - Leads API functions
+- `src/api/index.ts` - API exports
+- `src/lib/query.ts` - TanStack Query configuration
+- `src/hooks/useLeadsList.ts` - Paginated list hook
+- `src/hooks/useLeadDetail.ts` - Real-time detail hook
+- `src/hooks/useLeadMutations.ts` - Mutation hooks
+- `src/components/ui/pagination.tsx` - Pagination component
+- `src/pages/LeadsPaginated.tsx` - New paginated leads page
+
+### Files Modified
+- `functions/src/index.ts` - Added API Cloud Function export
+- `functions/package.json` - Added new dependencies
+- `package.json` - Added TanStack Query
+- `src/App.tsx` - Added QueryClientProvider, switched to LeadsPaginated
+
+### Migration Notes
+- Old `useLeads` hook and `Leads.tsx` preserved for reference
+- New paginated system activated via App.tsx route change
+- Old Firestore real-time subscription still used for lead detail page
+- No database changes required - uses existing Firestore collections
+
+### Performance Impact
+- Initial page load: 50 leads instead of ALL leads
+- Firestore reads: ~50/page instead of N (where N = total leads)
+- Memory usage: Constant regardless of total lead count
+- Polling: Every 15 seconds for fresh data
+
+### Technical Notes
+- Offset-based pagination works well up to ~50k documents
+- For larger datasets, consider cursor-based pagination with `startAfter()`
+- Search currently uses client-side filtering on server (fetches matching filter, then searches)
+- For full-text search at scale, add Algolia or Typesense
+
+---
+
+## March 5, 2026 - Competition Lead Type & Pipeline
+
+### Overview
+Added a new lead type "Competition" for tracking competitor companies and products. This enables systematic competitive research to inform product strategy for both Architect and Director.
+
+### Why Competition Tracking
+Unlike other lead types that represent potential customers or partners, competition leads track companies that compete in the same space. This requires different tracking: product analysis, threat assessment, market positioning, and ongoing monitoring rather than relationship progression.
+
+### New Features
+
+#### 1. Competition Lead Type
+- Added `competition` as fifth lead type alongside studio, publisher, investor, community
+- Competition-specific fields:
+  - **Products**: List of products they offer (array)
+  - **Target Market**: Architect, Director, or Both
+  - **Threat Level**: 1-5 scale (Minimal to Major Threat)
+  - **Strengths**: List of competitive advantages
+  - **Weaknesses**: List of vulnerabilities
+  - **Differentiator**: What makes them different from us
+  - **Funding Stage**: e.g., "Series A", "Bootstrapped"
+  - **Team Size**: e.g., "10-50", "startup"
+  - **Founded Year**: When the company was founded
+  - **Website**: Competitor's website URL
+  - **Pricing Info**: e.g., "$29/mo", "freemium", "enterprise"
+  - **Last Checked**: When competitor was last researched
+  - **Est. Paid Users**: Estimated number of paying customers
+  - **Est. Free Users**: Estimated free tier users
+  - **Est. Revenue**: Estimated annual revenue
+  - **Amount Raised**: Total funding raised
+
+#### 2. Competition Pipeline
+New pipeline with research-focused stages:
+1. **New** (gray) - Just identified, no research yet
+2. **Researched** (blue) - Basic research completed, scored
+3. **Tracking** (yellow) - Not direct competition, but worth monitoring
+4. **Direct - Architect** (red) - Direct competitor to Architect product
+5. **Direct - Director** (orange) - Direct competitor to Director product
+
+#### 3. Priority Auto-Calculation
+Priority auto-calculates from threat level:
+- Threat Level 4-5 → High priority
+- Threat Level 3 → Medium priority
+- Threat Level 2 → Low priority
+- Threat Level 1 → None
+
+### New Type Interfaces
+```typescript
+type CompetitionTargetMarket = 'architect' | 'director' | 'both';
+
+interface CompetitionInfo {
+  // What they offer
+  products: string[];
+  targetMarket: CompetitionTargetMarket;
+
+  // Assessment
+  threatLevel: 1 | 2 | 3 | 4 | 5;
+  strengths: string[];
+  weaknesses: string[];
+
+  // Context
+  fundingStage?: string;
+  teamSize?: string;
+  foundedYear?: number;
+  differentiator?: string;
+
+  // Links & metrics
+  website?: string;
+  pricingInfo?: string;
+  lastChecked?: Date;
+  estimatedPaidUsers?: number;
+  estimatedFreeUsers?: number;
+  estimatedRevenue?: number;
+  amountRaised?: number;
+}
+```
+
+### Files Created
+- `src/components/forms/LeadCompetitionFields.tsx` - Competition-specific form fields
+- `src/components/leads/LeadCompetitionInfo.tsx` - Competition info display component
+
+### Files Modified
+- `src/types/lead.ts` - Added CompetitionInfo, CompetitionTargetMarket, updated Lead type
+- `src/types/pipeline.ts` - Added 'competition' to Pipeline type, DEFAULT_COMPETITION_STAGES
+- `src/lib/firestore.ts` - Added competition to initializeDefaultPipelines, initializeCompetitionPipeline
+- `src/contexts/ConfigContext.tsx` - Added 'competition' to defaultLeadTypes
+- `src/components/forms/LeadForm.tsx` - Added LeadCompetitionFields section
+- `src/components/leads/index.ts` - Export LeadCompetitionInfo
+- `src/components/layout/Sidebar.tsx` - Added Competition Pipeline to navigation (Shield icon)
+- `src/pages/PipelineView.tsx` - Added competition URL mapping
+- `src/pages/LeadDetail.tsx` - Added LeadCompetitionInfo display
+
+### Migration for Existing Databases
+Run `initializeCompetitionPipeline()` to add the Competition pipeline to existing databases.
+
+### Technical Notes
+- Competition leads use existing Contact linking system for tracking key personnel
+- Priority auto-calculates from threat level (1-5 scale maps to priority)
+- Strengths/weaknesses stored as arrays, entered one per line in form
+- Products displayed as badges in detail view
+- Financial metrics formatted with K/M suffixes for readability

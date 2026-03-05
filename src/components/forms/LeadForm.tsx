@@ -7,6 +7,7 @@ import { LeadContactFields } from './LeadContactFields';
 import { LeadStudioFields } from './LeadStudioFields';
 import { LeadInvestorFields } from './LeadInvestorFields';
 import { LeadCommunityFields } from './LeadCommunityFields';
+import { LeadCompetitionFields } from './LeadCompetitionFields';
 import { LeadQualificationFields } from './LeadQualificationFields';
 import {
   validateRequired,
@@ -15,7 +16,7 @@ import {
   validateLinkedInUrl,
 } from '@/lib/validators';
 import { calculatePriorityFromFitScore, calculateLeadPriority } from '@/lib/utils';
-import type { Lead, LeadContact, StudioInfo, InvestorInfo, CommunityInfo } from '@/types/lead';
+import type { Lead, LeadContact, StudioInfo, InvestorInfo, CommunityInfo, CompetitionInfo } from '@/types/lead';
 
 interface LeadFormProps {
   initialValues?: Partial<Lead>;
@@ -102,6 +103,31 @@ export const LeadForm: React.FC<LeadFormProps> = ({
         // Normalize community score (0-12) to 0-10 range for priority calculation
         const normalizedScore = fitScore !== undefined ? (fitScore / 12) * 10 : undefined;
         newValues.priority = calculatePriorityFromFitScore(normalizedScore);
+      }
+
+      return newValues;
+    });
+  }, []);
+
+  const handleCompetitionChange = useCallback((_field: keyof Lead, value: Partial<CompetitionInfo>) => {
+    setValues((prev) => {
+      const newValues = { ...prev, competition: { ...prev.competition, ...value } as CompetitionInfo };
+
+      // Auto-calculate priority from threat level if not manually set
+      if ('threatLevel' in value && !priorityManuallySet.current) {
+        const threatLevel = value.threatLevel;
+        if (threatLevel !== undefined) {
+          // Map threat level (1-5) to priority
+          if (threatLevel >= 4) {
+            newValues.priority = 'high';
+          } else if (threatLevel >= 3) {
+            newValues.priority = 'medium';
+          } else if (threatLevel >= 2) {
+            newValues.priority = 'low';
+          } else {
+            newValues.priority = 'none';
+          }
+        }
       }
 
       return newValues;
@@ -204,6 +230,16 @@ export const LeadForm: React.FC<LeadFormProps> = ({
           <LeadCommunityFields
             values={values}
             onChange={handleCommunityChange}
+            errors={errors}
+          />
+        </div>
+      )}
+
+      {values.type === 'competition' && (
+        <div className="border-t pt-4">
+          <LeadCompetitionFields
+            values={values}
+            onChange={handleCompetitionChange}
             errors={errors}
           />
         </div>
