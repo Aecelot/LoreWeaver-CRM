@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { ExportDialog, ImportDialog, TagManager, GmailConnection, GoogleContactsImport } from '@/components/settings';
-import { initializeDefaultPipelines, migrateLeadsWithCreatedBy, migrateStudioPipelineWithQualifiedLead, initializeCommunityPipeline, initializeCommunityTags } from '@/lib/firestore';
+import { initializeDefaultPipelines, migrateLeadsWithCreatedBy, migrateStudioPipelineWithQualifiedLead, initializeCommunityPipeline, initializeCommunityTags, initializeCompetitionPipeline } from '@/lib/firestore';
 import { Download, Upload, User, Database, GitBranch, Wrench } from 'lucide-react';
 
 export const Settings: React.FC = () => {
@@ -19,6 +19,8 @@ export const Settings: React.FC = () => {
   const [pipelineMigrationResult, setPipelineMigrationResult] = useState<{ updated: boolean; message: string } | null>(null);
   const [initializingCommunity, setInitializingCommunity] = useState(false);
   const [communityResult, setCommunityResult] = useState<{ pipeline: string; tags: string } | null>(null);
+  const [initializingCompetition, setInitializingCompetition] = useState(false);
+  const [competitionResult, setCompetitionResult] = useState<{ created: boolean; message: string } | null>(null);
 
   const handleInitializePipelines = async () => {
     setInitializingPipelines(true);
@@ -89,6 +91,23 @@ export const Settings: React.FC = () => {
       toast.error('Failed to initialize community features');
     } finally {
       setInitializingCommunity(false);
+    }
+  };
+
+  const handleInitializeCompetition = async () => {
+    setInitializingCompetition(true);
+    try {
+      const result = await initializeCompetitionPipeline();
+      setCompetitionResult(result);
+      if (result.created) {
+        toast.success('Competition pipeline initialized');
+      } else {
+        toast.info(result.message);
+      }
+    } catch {
+      toast.error('Failed to initialize competition pipeline');
+    } finally {
+      setInitializingCompetition(false);
     }
   };
 
@@ -266,6 +285,26 @@ export const Settings: React.FC = () => {
               variant="outline"
             >
               {initializingCommunity ? 'Initializing...' : 'Add Community Features'}
+            </Button>
+          </div>
+
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-medium mb-2">Competition Pipeline</h4>
+            <p className="text-sm text-muted-foreground mb-3">
+              Add the Competition lead type for tracking competitors. This creates a pipeline
+              with stages: New, Researched, Tracking, Direct - Architect, Direct - Director.
+            </p>
+            {competitionResult && (
+              <p className={`text-sm mb-3 ${competitionResult.created ? 'text-green-600' : 'text-muted-foreground'}`}>
+                {competitionResult.message}
+              </p>
+            )}
+            <Button
+              onClick={handleInitializeCompetition}
+              disabled={initializingCompetition}
+              variant="outline"
+            >
+              {initializingCompetition ? 'Initializing...' : 'Add Competition Pipeline'}
             </Button>
           </div>
         </CardContent>

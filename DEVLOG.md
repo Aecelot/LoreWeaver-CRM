@@ -1169,9 +1169,10 @@ interface CompetitionInfo {
 - `src/components/layout/Sidebar.tsx` - Added Competition Pipeline to navigation (Shield icon)
 - `src/pages/PipelineView.tsx` - Added competition URL mapping
 - `src/pages/LeadDetail.tsx` - Added LeadCompetitionInfo display
+- `src/pages/Settings.tsx` - Added "Add Competition Pipeline" button
 
 ### Migration for Existing Databases
-Run `initializeCompetitionPipeline()` to add the Competition pipeline to existing databases.
+Go to Settings > Pipeline Setup and click "Add Competition Pipeline" to add the Competition pipeline to existing databases. This button calls `initializeCompetitionPipeline()` and shows feedback on success/failure.
 
 ### Technical Notes
 - Competition leads use existing Contact linking system for tracking key personnel
