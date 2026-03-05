@@ -11,7 +11,22 @@
       "Bash(CLOUDSDK_PYTHON=/c/Python314/python.exe /c/Users/rijkg/AppData/Local/Google/Cloud\\\\ SDK/google-cloud-sdk/bin/gcloud.cmd config set:*)",
       "Bash(gcloud projects get-iam-policy:*)",
       "Bash(firebase login:list:*)",
-      "Bash(set FIREBASE_TOKEN=)"
+      "Bash(set FIREBASE_TOKEN=)",
+      "Bash(find:*)",
+      "Bash(GOOGLE_APPLICATION_CREDENTIALS=\"C:/Users/rijkg/Documents/GitHub/LoreWeaver-CRM/loreweaver-crm-79fca7e62b1a.json\" firebase deploy:*)",
+      "Bash(unset:*)",
+      "Bash(export GOOGLE_APPLICATION_CREDENTIALS:*)",
+      "Bash(gcloud functions add-iam-policy-binding:*)",
+      "Bash(firebase logout:*)",
+      "Bash(cmd /c \"dir %APPDATA%\\\\configstore\")",
+      "Bash(cmd /c \"dir C:\\\\Users\\\\rijkg\\\\.config\\\\configstore\\\\firebase*.json\")",
+      "Bash(cmd /c \"dir /s /b C:\\\\Users\\\\rijkg\\\\AppData\\\\Roaming\\\\configstore\\\\*firebase*\")",
+      "Bash(cmd /c \"type C:\\\\Users\\\\rijkg\\\\.npmrc\")",
+      "Bash(cmd /c \"dir C:\\\\Users\\\\rijkg\\\\AppData\\\\Roaming\\\\npm\\\\node_modules\\\\firebase-tools\")",
+      "Bash(findstr:*)",
+      "Bash(cmd /c \"if exist %USERPROFILE%\\\\.config\\\\configstore\\\\firebase-tools.json \\(echo Found config && type %USERPROFILE%\\\\.config\\\\configstore\\\\firebase-tools.json\\) else \\(echo Config not found\\)\")",
+      "Bash(npm view:*)",
+      "Bash(gcloud run services add-iam-policy-binding:*)"
     ]
   }
 }

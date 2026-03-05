@@ -1,56 +1,88 @@
-import * as functions from "firebase-functions";
-import cors from "cors";
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onRequest } from "firebase-functions/v2/https";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { processScheduledEmails, checkForReplies } from "./gmail";
 import { db, collections, createOAuth2Client } from "./config";
 import { Timestamp } from "firebase-admin/firestore";
 import { google } from "googleapis";
-
-// Configure CORS - allow all origins
-const corsMiddleware = cors({ origin: true });
+import apiApp from "./api";
 
 // =============================================================================
-// SCHEDULED FUNCTIONS (Gen 1)
+// REST API (Gen 2)
+// =============================================================================
+
+/**
+ * Main API endpoint for paginated data access.
+ * Handles leads, contacts, and other CRUD operations.
+ *
+ * Routes:
+ *   GET  /api/leads         - List leads (paginated)
+ *   GET  /api/leads/:id     - Get single lead
+ *   POST /api/leads         - Create lead
+ *   PATCH /api/leads/:id    - Update lead
+ *   DELETE /api/leads/:id   - Delete lead
+ *   GET  /api/leads/stats   - Get lead statistics
+ */
+export const api = onRequest(
+  {
+    cors: true,
+    memory: "512MiB",
+    timeoutSeconds: 60,
+    minInstances: 0,
+    maxInstances: 10,
+    invoker: "public", // Allow public access - auth handled by Express middleware
+  },
+  apiApp
+);
+
+// =============================================================================
+// SCHEDULED FUNCTIONS (Gen 2)
 // =============================================================================
 
 /**
  * Process scheduled emails every hour
  * Checks for emails that need to be sent based on sequence timing
  */
-export const processEmails = functions
-  .runWith({ memory: "256MB" })
-  .pubsub.schedule("every 1 hours")
-  .timeZone("Europe/Amsterdam")
-  .onRun(async () => {
+export const processEmails = onSchedule(
+  {
+    schedule: "0 * * * *",
+    timeZone: "Europe/Amsterdam",
+    memory: "256MiB",
+  },
+  async () => {
     console.log("Running scheduled email processor...");
     await processScheduledEmails();
     console.log("Scheduled email processor complete.");
-    return null;
-  });
+  }
+);
 
 /**
  * Check for replies every 15 minutes
  * Updates sequence status when recipients reply
  */
-export const processReplies = functions
-  .runWith({ memory: "256MB" })
-  .pubsub.schedule("every 15 minutes")
-  .timeZone("Europe/Amsterdam")
-  .onRun(async () => {
+export const processReplies = onSchedule(
+  {
+    schedule: "*/15 * * * *",
+    timeZone: "Europe/Amsterdam",
+    memory: "256MiB",
+  },
+  async () => {
     console.log("Checking for replies...");
     await checkForReplies();
     console.log("Reply check complete.");
-    return null;
-  });
+  }
+);
 
 // =============================================================================
-// TRACKING ENDPOINTS (Gen 1)
+// TRACKING ENDPOINTS (Gen 2)
 // =============================================================================
 
 /**
  * Track email opens via tracking pixel
  */
-export const emailOpen = functions.https.onRequest((req, res) => {
-  corsMiddleware(req, res, async () => {
+export const emailOpen = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
     try {
       const { id } = req.query;
 
@@ -89,14 +121,15 @@ export const emailOpen = functions.https.onRequest((req, res) => {
     res.set("Content-Type", "image/gif");
     res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
     res.send(pixel);
-  });
-});
+  }
+);
 
 /**
  * Track link clicks
  */
-export const emailClick = functions.https.onRequest((req, res) => {
-  corsMiddleware(req, res, async () => {
+export const emailClick = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
     try {
       const { id } = req.query;
 
@@ -134,8 +167,8 @@ export const emailClick = functions.https.onRequest((req, res) => {
     }
 
     res.status(400).send("Invalid tracking link");
-  });
-});
+  }
+);
 
 // =============================================================================
 // GMAIL OAUTH (Firestore triggers to bypass org network policies)
@@ -145,9 +178,12 @@ export const emailClick = functions.https.onRequest((req, res) => {
  * Generate Gmail OAuth URL via Firestore trigger
  * Frontend creates a request doc, this function writes the response
  */
-export const onGmailAuthRequest = functions.firestore
-  .document("gmailAuthRequests/{requestId}")
-  .onCreate(async (snap) => {
+export const onGmailAuthRequest = onDocumentCreated(
+  "gmailAuthRequests/{requestId}",
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+
     try {
       // Use frontend redirect to bypass org policy blocking HTTP functions
       const oauth2Client = createOAuth2Client(true);
@@ -178,15 +214,19 @@ export const onGmailAuthRequest = functions.firestore
         completedAt: Timestamp.now(),
       });
     }
-  });
+  }
+);
 
 /**
  * Exchange OAuth code for tokens via Firestore trigger
  * Frontend writes the code to Firestore, this function exchanges it
  */
-export const onGmailCodeExchange = functions.firestore
-  .document("gmailCodeExchange/{exchangeId}")
-  .onCreate(async (snap) => {
+export const onGmailCodeExchange = onDocumentCreated(
+  "gmailCodeExchange/{exchangeId}",
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+
     const exchangeId = snap.id;
     console.log(`[Gmail OAuth] Trigger fired for exchange: ${exchangeId}`);
 
@@ -256,47 +296,51 @@ export const onGmailCodeExchange = functions.firestore
         completedAt: Timestamp.now(),
       });
     }
-  });
+  }
+);
 
 /**
  * Handle Gmail OAuth callback
  * Exchanges auth code for tokens and stores them
  * NOTE: This must remain an HTTP function for Google OAuth redirect
  */
-export const gmailCallback = functions.https.onRequest(async (req, res) => {
-  const { code } = req.query;
+export const gmailCallback = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    const { code } = req.query;
 
-  if (typeof code !== "string") {
-    res.status(400).send("Missing authorization code");
-    return;
+    if (typeof code !== "string") {
+      res.status(400).send("Missing authorization code");
+      return;
+    }
+
+    try {
+      const oauth2Client = createOAuth2Client();
+      const { tokens } = await oauth2Client.getToken(code);
+      oauth2Client.setCredentials(tokens);
+
+      // Get user email
+      const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+      const userInfo = await oauth2.userinfo.get();
+      const email = userInfo.data.email;
+
+      // Store tokens in Firestore
+      await db.collection(collections.config).doc("gmail").set({
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt: tokens.expiry_date,
+        email: email,
+        connectedAt: Timestamp.now(),
+      });
+
+      // Redirect back to CRM settings with success
+      res.redirect("https://loreweaver-crm.web.app/settings?gmail=connected");
+    } catch (error) {
+      console.error("Error exchanging code for tokens:", error);
+      res.redirect("https://loreweaver-crm.web.app/settings?gmail=error");
+    }
   }
-
-  try {
-    const oauth2Client = createOAuth2Client();
-    const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
-
-    // Get user email
-    const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
-    const userInfo = await oauth2.userinfo.get();
-    const email = userInfo.data.email;
-
-    // Store tokens in Firestore
-    await db.collection(collections.config).doc("gmail").set({
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      expiresAt: tokens.expiry_date,
-      email: email,
-      connectedAt: Timestamp.now(),
-    });
-
-    // Redirect back to CRM settings with success
-    res.redirect("https://loreweaver-crm.web.app/settings?gmail=connected");
-  } catch (error) {
-    console.error("Error exchanging code for tokens:", error);
-    res.redirect("https://loreweaver-crm.web.app/settings?gmail=error");
-  }
-});
+);
 
 // NOTE: getGmailStatus and disconnectGmail removed - handled directly via Firestore from frontend
 // Frontend reads config/gmail for status, deletes config/gmail for disconnect
@@ -305,9 +349,12 @@ export const gmailCallback = functions.https.onRequest(async (req, res) => {
  * Send test email via Firestore trigger
  * Frontend writes a request doc, this function sends the email
  */
-export const onTestEmailRequest = functions.firestore
-  .document("testEmailRequests/{requestId}")
-  .onCreate(async (snap) => {
+export const onTestEmailRequest = onDocumentCreated(
+  "testEmailRequests/{requestId}",
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+
     const data = snap.data();
     const to = data?.to;
     const subject = data?.subject || "Test Email from LoreWeaver CRM";
@@ -387,7 +434,8 @@ export const onTestEmailRequest = functions.firestore
         completedAt: Timestamp.now(),
       });
     }
-  });
+  }
+);
 
 // =============================================================================
 // GOOGLE CONTACTS IMPORT
@@ -406,9 +454,12 @@ interface GoogleContact {
  * Import contacts from Google People API via Firestore trigger
  * Frontend writes a request doc, this function fetches contacts and returns them
  */
-export const onContactImportRequest = functions.firestore
-  .document("contactImportRequests/{requestId}")
-  .onCreate(async (snap) => {
+export const onContactImportRequest = onDocumentCreated(
+  "contactImportRequests/{requestId}",
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+
     console.log("[Contact Import] Trigger fired");
 
     try {
@@ -475,7 +526,8 @@ export const onContactImportRequest = functions.firestore
         completedAt: Timestamp.now(),
       });
     }
-  });
+  }
+);
 
 // =============================================================================
 // NEWSLETTER FUNCTIONS
@@ -491,9 +543,12 @@ import {
 /**
  * Trigger newsletter send when request document is created
  */
-export const onNewsletterSendRequest = functions.firestore
-  .document("newsletterSendRequests/{requestId}")
-  .onCreate(async (snap) => {
+export const onNewsletterSendRequest = onDocumentCreated(
+  "newsletterSendRequests/{requestId}",
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+
     const data = snap.data();
     const newsletterId = data?.newsletterId;
 
@@ -507,13 +562,15 @@ export const onNewsletterSendRequest = functions.firestore
     }
 
     await processNewsletterSend(newsletterId, snap.ref);
-  });
+  }
+);
 
 /**
  * Track newsletter opens via tracking pixel
  */
-export const newsletterOpen = functions.https.onRequest((req, res) => {
-  corsMiddleware(req, res, async () => {
+export const newsletterOpen = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
     try {
       const { id } = req.query;
 
@@ -532,14 +589,15 @@ export const newsletterOpen = functions.https.onRequest((req, res) => {
     res.set("Content-Type", "image/gif");
     res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
     res.send(pixel);
-  });
-});
+  }
+);
 
 /**
  * Track newsletter link clicks
  */
-export const newsletterClick = functions.https.onRequest((req, res) => {
-  corsMiddleware(req, res, async () => {
+export const newsletterClick = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
     try {
       const { id } = req.query;
 
@@ -556,117 +614,120 @@ export const newsletterClick = functions.https.onRequest((req, res) => {
     }
 
     res.status(400).send("Invalid tracking link");
-  });
-});
+  }
+);
 
 /**
  * Handle newsletter unsubscribe
  */
-export const newsletterUnsubscribe = functions.https.onRequest(async (req, res) => {
-  try {
-    const { id } = req.query;
+export const newsletterUnsubscribe = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const { id } = req.query;
 
-    if (typeof id === "string") {
-      const success = await handleNewsletterUnsubscribe(id);
+      if (typeof id === "string") {
+        const success = await handleNewsletterUnsubscribe(id);
 
-      if (success) {
-        res.send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Unsubscribed</title>
-            <style>
-              body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                margin: 0;
-                background: #f9fafb;
-              }
-              .container {
-                text-align: center;
-                padding: 2rem;
-                background: white;
-                border-radius: 8px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                max-width: 400px;
-              }
-              h1 {
-                color: #111827;
-                margin: 0 0 0.5rem;
-              }
-              p {
-                color: #6b7280;
-                margin: 0;
-              }
-              .icon {
-                font-size: 3rem;
-                margin-bottom: 1rem;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="icon">✓</div>
-              <h1>Unsubscribed</h1>
-              <p>You have been successfully unsubscribed from this mailing list.</p>
-            </div>
-          </body>
-          </html>
-        `);
-        return;
+        if (success) {
+          res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Unsubscribed</title>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  min-height: 100vh;
+                  margin: 0;
+                  background: #f9fafb;
+                }
+                .container {
+                  text-align: center;
+                  padding: 2rem;
+                  background: white;
+                  border-radius: 8px;
+                  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                  max-width: 400px;
+                }
+                h1 {
+                  color: #111827;
+                  margin: 0 0 0.5rem;
+                }
+                p {
+                  color: #6b7280;
+                  margin: 0;
+                }
+                .icon {
+                  font-size: 3rem;
+                  margin-bottom: 1rem;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="icon">✓</div>
+                <h1>Unsubscribed</h1>
+                <p>You have been successfully unsubscribed from this mailing list.</p>
+              </div>
+            </body>
+            </html>
+          `);
+          return;
+        }
       }
-    }
 
-    res.status(400).send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Error</title>
-        <style>
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: #f9fafb;
-          }
-          .container {
-            text-align: center;
-            padding: 2rem;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            max-width: 400px;
-          }
-          h1 {
-            color: #111827;
-            margin: 0 0 0.5rem;
-          }
-          p {
-            color: #6b7280;
-            margin: 0;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>Invalid Link</h1>
-          <p>This unsubscribe link is invalid or has expired.</p>
-        </div>
-      </body>
-      </html>
-    `);
-  } catch (error) {
-    console.error("Error handling unsubscribe:", error);
-    res.status(500).send("An error occurred");
+      res.status(400).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Error</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              margin: 0;
+              background: #f9fafb;
+            }
+            .container {
+              text-align: center;
+              padding: 2rem;
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+              max-width: 400px;
+            }
+            h1 {
+              color: #111827;
+              margin: 0 0 0.5rem;
+            }
+            p {
+              color: #6b7280;
+              margin: 0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>Invalid Link</h1>
+            <p>This unsubscribe link is invalid or has expired.</p>
+          </div>
+        </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error("Error handling unsubscribe:", error);
+      res.status(500).send("An error occurred");
+    }
   }
-});
+);

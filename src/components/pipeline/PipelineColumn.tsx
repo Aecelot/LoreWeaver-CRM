@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Badge } from '@/components/ui/badge';
-import { Inbox } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Inbox, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PipelineCard } from './PipelineCard';
 import { ColumnFilters } from './ColumnFilters';
 import { ColumnSortDropdown } from './ColumnSort';
@@ -11,6 +12,8 @@ import type { ColumnFilter, ColumnSort } from '@/types/filters';
 import { DEFAULT_SORT, isFilterActive } from '@/types/filters';
 import type { Lead } from '@/types/lead';
 import type { PipelineStage } from '@/types/pipeline';
+
+const LEADS_PER_PAGE = 10;
 
 interface PipelineColumnProps {
   stage: PipelineStage;
@@ -31,6 +34,8 @@ export const PipelineColumn: React.FC<PipelineColumnProps> = ({
   onSortChange,
   availableTags = [],
 }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
     data: {
@@ -39,12 +44,36 @@ export const PipelineColumn: React.FC<PipelineColumnProps> = ({
     },
   });
 
-  const leadIds = leads.map((lead) => lead.id);
+  // Calculate pagination
+  const totalPages = Math.max(1, Math.ceil(leads.length / LEADS_PER_PAGE));
+
+  // Reset to page 1 if current page exceeds total (e.g., after filtering)
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
+
+  // Get paginated leads for current page
+  const paginatedLeads = useMemo(() => {
+    const startIndex = (currentPage - 1) * LEADS_PER_PAGE;
+    return leads.slice(startIndex, startIndex + LEADS_PER_PAGE);
+  }, [leads, currentPage]);
+
+  const leadIds = paginatedLeads.map((lead) => lead.id);
   const hasActiveFilter = isFilterActive(filter);
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
 
   return (
     <div
-      className={`flex flex-col w-full md:min-w-[280px] md:max-w-[320px] md:w-auto bg-muted/50 rounded-lg ${
+      className={`flex flex-col w-full md:min-w-[560px] md:max-w-[640px] md:w-auto bg-muted/50 rounded-lg ${
         isOver ? 'ring-2 ring-primary ring-offset-2' : ''
       }`}
     >
@@ -93,7 +122,7 @@ export const PipelineColumn: React.FC<PipelineColumnProps> = ({
         }`}
       >
         <SortableContext items={leadIds} strategy={verticalListSortingStrategy}>
-          {leads.map((lead) => (
+          {paginatedLeads.map((lead) => (
             <PipelineCard key={lead.id} lead={lead} />
           ))}
         </SortableContext>
@@ -105,6 +134,33 @@ export const PipelineColumn: React.FC<PipelineColumnProps> = ({
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {leads.length > LEADS_PER_PAGE && (
+        <div className="flex items-center justify-between p-2 border-t bg-muted/30">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className="h-7 px-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {currentPage} / {totalPages}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="h-7 px-2"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
