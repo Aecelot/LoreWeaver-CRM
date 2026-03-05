@@ -167,10 +167,11 @@ export function calculateRecencyScore(lastContactedAt: Date | undefined | null):
  * @returns Fit score 0-10 or 0 if not set
  */
 export function getFitScore(lead: {
-  type: 'studio' | 'publisher' | 'investor' | 'community';
+  type: 'studio' | 'publisher' | 'investor' | 'community' | 'competition';
   studio?: { fitScore?: number };
   investor?: { fitScore?: number };
   community?: { fitScore?: number };
+  competition?: { threatLevel?: number };
 }): number {
   if (lead.type === 'studio' || lead.type === 'publisher') {
     return lead.studio?.fitScore ?? 0;
@@ -179,6 +180,11 @@ export function getFitScore(lead: {
     // Community fit score is 0-12, normalize to 0-10 for priority calculation
     const communityScore = lead.community?.fitScore ?? 0;
     return (communityScore / 12) * 10;
+  }
+  if (lead.type === 'competition') {
+    // Competition uses threat level (1-5), normalize to 0-10 for priority calculation
+    const threatLevel = lead.competition?.threatLevel ?? 1;
+    return (threatLevel / 5) * 10;
   }
   return lead.investor?.fitScore ?? 0;
 }
@@ -190,10 +196,11 @@ export function getFitScore(lead: {
  * @returns Score from 0-10
  */
 export function calculatePriorityScore(lead: {
-  type: 'studio' | 'publisher' | 'investor' | 'community';
+  type: 'studio' | 'publisher' | 'investor' | 'community' | 'competition';
   studio?: { fitScore?: number };
   investor?: { fitScore?: number };
   community?: { fitScore?: number };
+  competition?: { threatLevel?: number };
   hasRequestedPricing?: boolean;
   hasRequestedDemo?: boolean;
   decisionTimeline?: string;
@@ -227,10 +234,11 @@ export function calculatePriorityFromScore(score: number): 'high' | 'medium' | '
  * @returns Object with all scores and priority level
  */
 export function calculateLeadPriority(lead: {
-  type: 'studio' | 'publisher' | 'investor' | 'community';
+  type: 'studio' | 'publisher' | 'investor' | 'community' | 'competition';
   studio?: { fitScore?: number };
   investor?: { fitScore?: number };
   community?: { fitScore?: number };
+  competition?: { threatLevel?: number };
   hasRequestedPricing?: boolean;
   hasRequestedDemo?: boolean;
   decisionTimeline?: string;

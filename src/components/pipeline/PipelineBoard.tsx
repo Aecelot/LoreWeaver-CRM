@@ -28,7 +28,7 @@ import {
 import type { Lead } from '@/types/lead';
 
 interface PipelineBoardProps {
-  pipelineType: 'studio' | 'investor' | 'community';
+  pipelineType: 'studio' | 'investor' | 'community' | 'competition';
   searchTerm?: string;
   // External filter/sort state (optional - for presets integration)
   externalFilters?: Record<string, ColumnFilter>;

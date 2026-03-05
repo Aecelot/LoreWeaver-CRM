@@ -23,7 +23,7 @@ import { isFilterActive } from '@/types/filters';
 import { toast } from 'sonner';
 
 interface FilterPresetsProps {
-  pipelineType: 'studio' | 'investor' | 'community';
+  pipelineType: 'studio' | 'investor' | 'community' | 'competition';
   columnFilters: Record<string, ColumnFilter>;
   columnSorts: Record<string, ColumnSort>;
   onApplyPreset: (filters: Record<string, ColumnFilter>, sorts: Record<string, ColumnSort>) => void;

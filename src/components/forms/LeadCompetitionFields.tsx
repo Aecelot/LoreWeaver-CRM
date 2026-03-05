@@ -26,7 +26,7 @@ export const LeadCompetitionFields: React.FC<LeadCompetitionFieldsProps> = ({
 
   const handleCompetitionChange = (
     field: keyof CompetitionInfo,
-    value: string | number | boolean | string[] | Date
+    value: string | number | boolean | string[] | Date | undefined
   ) => {
     const newCompetition = {
       ...competition,
