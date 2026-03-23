@@ -6,3 +6,4 @@ export { Newsletters } from './Newsletters';
 export { NewsletterCompose } from './NewsletterCompose';
 export { PipelineView } from './PipelineView';
 export { Settings } from './Settings';
+export { Tasks } from './Tasks';

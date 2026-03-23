@@ -6,4 +6,5 @@ export * from './newsletter';
 export * from './note';
 export * from './pipeline';
 export * from './sequence';
+export * from './task';
 export * from './user';

@@ -20,6 +20,7 @@ import type { Pipeline } from '../types/pipeline';
 import type { Tag } from '../types/tag';
 import type { Activity, ActivityFormData } from '../types/activity';
 import type { Contact, ContactFormData, LeadContactLink, LeadContactLinkFormData, ContactFilters } from '../types/contact';
+import type { Task, TaskFormData, TaskFilters } from '../types/task';
 
 // Collections
 const LEADS_COLLECTION = 'leads';
@@ -28,6 +29,7 @@ const PIPELINES_COLLECTION = 'pipelines';
 const TAGS_COLLECTION = 'tags';
 const ACTIVITIES_COLLECTION = 'activities';
 const CONTACTS_COLLECTION = 'contacts';
+const TASKS_COLLECTION = 'tasks';
 const LEAD_CONTACTS_COLLECTION = 'leadContacts';
 
 // Lead operations
@@ -860,4 +862,60 @@ export const initializeCompetitionPipeline = async (): Promise<{ created: boolea
   });
 
   return { created: true, message: 'Competition pipeline created successfully' };
+};
+
+// ============================================================================
+// Task operations
+// ============================================================================
+
+export const getTasksRealtime = (
+  callback: (tasks: Task[]) => void,
+  filters?: TaskFilters
+) => {
+  const q = query(collection(db, TASKS_COLLECTION), orderBy('createdAt', 'desc'));
+
+  return onSnapshot(q, (snapshot) => {
+    let tasks = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Task[];
+
+    // Apply filters client-side
+    if (filters) {
+      if (filters.assignee) {
+        tasks = tasks.filter(task => task.assignee === filters.assignee);
+      }
+      if (filters.status) {
+        tasks = tasks.filter(task => task.status === filters.status);
+      }
+      if (filters.project) {
+        tasks = tasks.filter(task => task.project === filters.project);
+      }
+    }
+
+    callback(tasks);
+  });
+};
+
+export const createTask = async (data: TaskFormData, userId: string) => {
+  const docRef = await addDoc(collection(db, TASKS_COLLECTION), {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    createdBy: userId,
+  });
+  return docRef.id;
+};
+
+export const updateTask = async (id: string, data: Partial<TaskFormData>) => {
+  const taskRef = doc(db, TASKS_COLLECTION, id);
+  await updateDoc(taskRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const deleteTask = async (id: string) => {
+  const taskRef = doc(db, TASKS_COLLECTION, id);
+  await deleteDoc(taskRef);
 };

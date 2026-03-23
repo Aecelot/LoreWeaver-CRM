@@ -13,6 +13,7 @@ import {
   LogOut,
   User,
   BookUser,
+  CheckSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,7 @@ import { Button } from '@/components/ui/button';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Tasks', href: '/tasks', icon: CheckSquare },
   { name: 'Leads', href: '/leads', icon: Users },
   { name: 'Contacts', href: '/contacts', icon: BookUser },
   { name: 'Studios Pipeline', href: '/pipeline/studios', icon: Building },
