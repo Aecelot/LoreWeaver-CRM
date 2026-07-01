@@ -25,6 +25,8 @@ const Newsletters = lazy(() => import('@/pages/Newsletters').then(m => ({ defaul
 const NewsletterCompose = lazy(() => import('@/pages/NewsletterCompose').then(m => ({ default: m.NewsletterCompose })));
 const Settings = lazy(() => import('@/pages/Settings').then(m => ({ default: m.Settings })));
 const Tasks = lazy(() => import('@/pages/Tasks').then(m => ({ default: m.Tasks })));
+const Events = lazy(() => import('@/pages/Events').then(m => ({ default: m.Events })));
+const Subsidies = lazy(() => import('@/pages/Subsidies').then(m => ({ default: m.Subsidies })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -69,6 +71,8 @@ function App() {
                     <Route path="newsletters/compose/:id" element={<NewsletterCompose />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="tasks" element={<Tasks />} />
+                    <Route path="events" element={<Events />} />
+                    <Route path="subsidies" element={<Subsidies />} />
                   </Route>
 
                   {/* Catch-all redirect */}

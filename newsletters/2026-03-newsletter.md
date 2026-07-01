@@ -10,46 +10,59 @@ Q1 2026 has been our most productive quarter yet. While the industry debates whe
 
 ---
 
-## 🎮 Director: From Prototype to Alpha
+## 🎮 Director: Building the Engine
 
-**Director is now running end-to-end gameplay loops.**
+**Director's core systems are coming online.**
 
-This isn't a demo. Director is a fully operational narrative AI engine connected to Unreal Engine 5, making real-time decisions about dialogue, actions, plot progression, and character development.
+We're assembling the moving parts of a real-time narrative AI engine — intent classification, character voice, lore retrieval, and plot generation. Here's where we are:
 
 ![Relationship Web](assets/relationship-web.png)
 
-### The Relationship Web
+### What's Working
 
-Director tracks every relationship between characters in real-time — not just "friendly" or "hostile," but semantic relationships like *"sold intelligence about"*, *"investigating"*, and *"secretly loves"*.
+**Intent Classification** — 92.3% accuracy
+Our proprietary classifier routes player input to the right narrative systems, fast and reliably.
 
-When you ask an NPC about another character, they don't recite a canned response. They know the history. They have opinions. They might lie.
+**In-Character Dialogue** — 96% voice fidelity
+NPCs speak in their own voice. Not generic AI, but characters with personality, consistent across sessions.
 
 ![NPC That Remembers](assets/npc-remembers.png)
 
-### NPCs That Remember
-
-Every conversation has context. NPCs track past interactions, their disposition toward the player, and what they know — then respond accordingly.
+**RAG Lore Retrieval** — 58ms (P50)
+When an NPC needs to reference world lore, they get it in 58 milliseconds. That's fast enough for real-time conversation.
 
 ![On-Device Inference](assets/on-device-local.png)
 
-### On-Device, No Cloud
+**Core Function Latency**
+- On-device: 3–10 seconds
+- Cloud: 1–5 seconds
 
-- **11.86ms** response latency
-- Runs on consumer GPUs (4GB VRAM)
-- No cloud dependency, no per-token API costs
-- Works offline — critical for shipped games
+### What's Next
+
+**Plot Engine** is currently in testing. We're already generating story arcs and beats on the fly in a closed environment. End-to-end integration is coming in the next few weeks.
+
+**Publisher Interest:** We have a publisher interested in the tech demo we're building. First alpha version will be ready in a couple of weeks.
 
 ---
 
-## ✍️ Architect: v0.3.2 Released
+## ✍️ Architect: Entering Closed Beta
 
-Architect continues to mature as a production tool for narrative designers.
+Architect is maturing into a full narrative design suite. Here's what we're building:
 
-**New this quarter:**
-- Entity generation from examples
-- Visual Story Board with infinite canvas
-- LLM task queue with progress tracking
-- Schema propagation for field changes
+**Core Features in Development:**
+- Dialogue generation
+- Story arc and beat generation
+- Filling beats with action
+- Narrative evaluation of arcs & beats
+- Playthrough mode
+- And more coming
+
+**Going to Market:**
+- Launching closed beta with **10 users** this month
+- Expanding to **100 users** next month
+- **Publisher interested** in a potential deal
+
+Architect is becoming the tool narrative designers didn't know they needed.
 
 ---
 
@@ -57,11 +70,27 @@ Architect continues to mature as a production tool for narrative designers.
 
 | Metric | Value |
 |--------|-------|
-| Director latency | 11.86ms |
 | Intent classification | 92.3% |
 | Character voice fidelity | 96% |
 | Lore retrieval (P50) | 58ms |
-| Qualitative score | 8.58/10 |
+| Core latency (on-device) | 3–10s |
+| Core latency (cloud) | 1–5s |
+
+---
+
+## 📈 Business Development
+
+We're building an automated outreach machine.
+
+**Custom CRM:**
+- Automated research and contact farming
+- Strategic planning and pipeline tracking
+- Built for scale
+
+**Pipeline:**
+- **1,000+ studio leads** worldwide
+- **3,000+ contacts** identified
+- Outreach campaign launching over the coming months to pitch Architect and Director
 
 ---
 

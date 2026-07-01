@@ -1,4 +1,5 @@
 export { Dashboard } from './Dashboard';
+export { Events } from './Events';
 export { Leads } from './Leads';
 export { LeadDetail } from './LeadDetail';
 export { Login } from './Login';
@@ -6,4 +7,5 @@ export { Newsletters } from './Newsletters';
 export { NewsletterCompose } from './NewsletterCompose';
 export { PipelineView } from './PipelineView';
 export { Settings } from './Settings';
+export { Subsidies } from './Subsidies';
 export { Tasks } from './Tasks';

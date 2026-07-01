@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './useAuth';
-import type { EmailSequence, SequenceFormData, LeadSequenceStatus } from '@/types';
+import type { EmailSequence, SequenceFormData, LeadSequenceStatus, MergeFields } from '@/types';
 
 export function useSequences() {
   const { user } = useAuth();
@@ -144,7 +144,8 @@ export function useLeadSequence(leadId: string) {
       sequenceId: string,
       sequenceName: string,
       recipientEmail: string,
-      recipientName: string
+      recipientName: string,
+      mergeFields: MergeFields
     ) => {
       const firstSendDate = new Date();
       // Send first email in 1 hour (or adjust as needed)
@@ -161,6 +162,7 @@ export function useLeadSequence(leadId: string) {
         history: [],
         recipientEmail,
         recipientName,
+        mergeFields,
       });
     },
     [leadId]

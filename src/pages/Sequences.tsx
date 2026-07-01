@@ -34,8 +34,10 @@ import {
   GripVertical,
   AlertCircle,
   Loader2,
+  Users,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Link } from 'react-router-dom';
 
 const DEFAULT_EMAIL: SequenceEmail = {
   order: 1,
@@ -152,10 +154,18 @@ export const Sequences: React.FC = () => {
             Create and manage automated email chains for outreach
           </p>
         </div>
-        <Button onClick={openCreateDialog} disabled={!gmailStatus.connected}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Sequence
-        </Button>
+        <div className="flex gap-2">
+          <Link to="/sequences/enroll">
+            <Button variant="outline" disabled={!gmailStatus.connected || sequences.length === 0}>
+              <Users className="h-4 w-4 mr-2" />
+              Bulk Enroll
+            </Button>
+          </Link>
+          <Button onClick={openCreateDialog} disabled={!gmailStatus.connected}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Sequence
+          </Button>
+        </div>
       </div>
 
       {!gmailStatus.connected && (

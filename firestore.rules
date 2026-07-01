@@ -142,5 +142,21 @@ service cloud.firestore {
     match /newsletterSendRequests/{requestId} {
       allow read, write: if isAuthenticated();
     }
+
+    // Events collection - tracking conferences, showcases, meetups
+    match /events/{eventId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+    }
+
+    // Subsidies collection - tracking grants, tax credits, funding
+    match /subsidies/{subsidyId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+    }
   }
 }

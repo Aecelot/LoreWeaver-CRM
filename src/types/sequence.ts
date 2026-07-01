@@ -29,6 +29,17 @@ export interface EmailEvent {
   repliedAt?: Timestamp;
 }
 
+// Standard merge fields for email personalization
+export interface MergeFields {
+  firstName: string;
+  lastName?: string;
+  studioName: string;
+  gameName?: string;
+  genre?: string;
+  customLine?: string;  // Personalized opener like "love the branching investigation structure"
+  [key: string]: string | undefined;  // Allow custom fields
+}
+
 export interface LeadSequenceStatus {
   id: string;
   leadId: string;
@@ -41,6 +52,7 @@ export interface LeadSequenceStatus {
   history: EmailEvent[];
   recipientEmail: string;
   recipientName: string;
+  mergeFields: MergeFields;  // Personalization data for this enrollment
 }
 
 export interface GmailStatus {

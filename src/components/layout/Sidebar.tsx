@@ -14,6 +14,8 @@ import {
   User,
   BookUser,
   CheckSquare,
+  Calendar,
+  Banknote,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -25,6 +27,8 @@ const navigation = [
   { name: 'Tasks', href: '/tasks', icon: CheckSquare },
   { name: 'Leads', href: '/leads', icon: Users },
   { name: 'Contacts', href: '/contacts', icon: BookUser },
+  { name: 'Events', href: '/events', icon: Calendar },
+  { name: 'Subsidies', href: '/subsidies', icon: Banknote },
   { name: 'Studios Pipeline', href: '/pipeline/studios', icon: Building },
   { name: 'Investors Pipeline', href: '/pipeline/investors', icon: DollarSign },
   { name: 'Channels Pipeline', href: '/pipeline/channels', icon: Hash },
